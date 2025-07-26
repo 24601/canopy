@@ -35,7 +35,6 @@ sys.path.append(os.path.dirname(__file__))
 
 from .types import TaskInput, MassConfig, ModelConfig, AgentConfig
 from .config import create_config_from_models
-from .orchestrator import MassOrchestrator  
 from .agents import create_agent
 from .streaming_display import create_streaming_display
 from .logging import MassLogManager
@@ -195,6 +194,7 @@ def run_mass_with_config(question: str, config: MassConfig) -> Dict[str, Any]:
     
     # Continue with multi-agent orchestration for multiple agents
     logger.info("🔄 Multiple agents detected - using multi-agent orchestration")
+    logger.info(f"   Algorithm: {config.orchestrator.algorithm}")
     
     # Create task input
     task = TaskInput(question=question)
@@ -217,8 +217,10 @@ def run_mass_with_config(question: str, config: MassConfig) -> Dict[str, Any]:
             answers_dir=str(log_manager.answers_dir) if not log_manager.non_blocking else None
         )
     
-    # Create orchestrator with full configuration
-    orchestrator = MassOrchestrator(
+    # Create algorithm instance instead of orchestrator
+    from .algorithms import create_algorithm
+    algorithm = create_algorithm(
+        algorithm_name=config.orchestrator.algorithm,
         max_duration=config.orchestrator.max_duration,
         consensus_threshold=config.orchestrator.consensus_threshold,
         max_debate_rounds=config.orchestrator.max_debate_rounds,
@@ -228,7 +230,7 @@ def run_mass_with_config(question: str, config: MassConfig) -> Dict[str, Any]:
     )
     
     # Set log manager
-    orchestrator.log_manager = log_manager
+    algorithm.log_manager = log_manager
     
     # Register agents
     for agent_config in config.agents:
@@ -245,21 +247,22 @@ def run_mass_with_config(question: str, config: MassConfig) -> Dict[str, Any]:
         agent = create_agent(
             agent_type=agent_config.agent_type,
             agent_id=agent_config.agent_id,
-            orchestrator=orchestrator,
+            orchestrator=algorithm,  # Pass algorithm as orchestrator
             model_config=agent_config.model_config,
             stream_callback=stream_callback
         )
-        orchestrator.register_agent(agent)
+        algorithm.register_agent(agent)
     
     logger.info(f"🚀 Starting MassGen with {len(config.agents)} agents")
     logger.info(f"   Question: {question}")
     logger.info(f"   Models: {[agent.model_config.model for agent in config.agents]}")
+    logger.info(f"   Algorithm: {config.orchestrator.algorithm}")
     logger.info(f"   Max duration: {config.orchestrator.max_duration}s")
     logger.info(f"   Consensus threshold: {config.orchestrator.consensus_threshold}")
     
     # Start the task and get results
     try:
-        result = orchestrator.start_task(task)
+        result = algorithm.start_task(task)
         logger.info("✅ MassGen completed successfully")
         return result
         
@@ -268,7 +271,7 @@ def run_mass_with_config(question: str, config: MassConfig) -> Dict[str, Any]:
         raise
     finally:
         # Cleanup
-        orchestrator.cleanup()
+        algorithm.cleanup()
 
 
 class MassSystem:

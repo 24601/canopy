@@ -197,7 +197,7 @@ Examples:
   python cli.py --models gpt-4o grok-4
   
   # Override parameters
-  python cli.py "Question" --models gpt-4o gemini-2.5-flash --max-duration 1200 --consensus 0.8
+  python cli.py "Question" --models gpt-4o gemini-2.5-flash --algorithm default --max-duration 1200 --consensus 0.8
         """
     )
     
@@ -212,6 +212,8 @@ Examples:
                              help="Model names (e.g., gpt-4o gemini-2.5-flash)")
     
     # Configuration overrides
+    parser.add_argument("--algorithm", type=str, default=None,
+                       help="Algorithm to use (default, arxiv_2503_04412)")
     parser.add_argument("--max-duration", type=int, default=None,
                        help="Max duration in seconds")
     parser.add_argument("--consensus", type=float, default=None,
@@ -233,6 +235,8 @@ Examples:
             config = create_config_from_models(args.models)
         
         # Apply command-line overrides
+        if args.algorithm is not None:
+            config.orchestrator.algorithm = args.algorithm
         if args.max_duration is not None:
             config.orchestrator.max_duration = args.max_duration
         if args.consensus is not None:

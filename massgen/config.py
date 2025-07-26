@@ -94,8 +94,12 @@ def create_config_from_models(
         )
         agents.append(agent_config)
     
-    # Create configuration components
-    orchestrator = OrchestratorConfig(**(orchestrator_config or {}))
+    # Create configuration components with defaults
+    orchestrator_defaults = {"algorithm": "default"}
+    if orchestrator_config:
+        orchestrator_defaults.update(orchestrator_config)
+    
+    orchestrator = OrchestratorConfig(**orchestrator_defaults)
     streaming_display = StreamingDisplayConfig(**(streaming_config or {}))
     logging = LoggingConfig(**(logging_config or {}))
     

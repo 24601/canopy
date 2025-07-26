@@ -181,6 +181,7 @@ class LoggingConfig:
 class OrchestratorConfig:
     """Configuration for MassGen orchestrator."""
     
+    algorithm: str = "default"  # Algorithm to use for orchestration
     max_duration: int = 600
     consensus_threshold: float = 0.0
     max_debate_rounds: int = 1
@@ -225,5 +226,11 @@ class MassConfig:
         # Validate consensus threshold
         if not 0.0 <= self.orchestrator.consensus_threshold <= 1.0:
             raise ValueError("Consensus threshold must be between 0.0 and 1.0")
+        
+        # Validate algorithm
+        from .algorithms import get_available_algorithms
+        available_algorithms = get_available_algorithms()
+        if self.orchestrator.algorithm not in available_algorithms:
+            raise ValueError(f"Unknown algorithm: {self.orchestrator.algorithm}. Available: {available_algorithms}")
         
         return True 

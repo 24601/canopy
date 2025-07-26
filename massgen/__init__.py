@@ -74,7 +74,7 @@ from .types import (
 )
 
 # Advanced components (for custom usage)
-from .orchestrator import MassOrchestrator
+from .algorithms import create_algorithm, get_available_algorithms
 from .streaming_display import create_streaming_display
 from .logging import MassLogManager
 
@@ -101,7 +101,8 @@ __all__ = [
     "TaskInput",
     
     # Advanced components
-    "MassOrchestrator",
+    "create_algorithm",
+    "get_available_algorithms",
     "create_streaming_display",
     "MassLogManager",
 ] 
