@@ -190,6 +190,7 @@ tmp/
 temp/
 *.tmp
 *.temp
+.scratchpad
 
 # Large model files
 *.bin

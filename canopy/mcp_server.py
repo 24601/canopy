@@ -394,6 +394,8 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[Union[TextCont
                 "max_debate_rounds": max_debate_rounds,
             },
         )
+        # Disable streaming display for MCP server usage
+        config.streaming_display.display_enabled = False
         
         # Add security monitoring
         if security_level in ["enhanced", "maximum"]:
@@ -480,6 +482,8 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[Union[TextCont
                         models=models,
                         orchestrator_config={"algorithm": algorithm},
                     )
+                    # Disable streaming display for MCP server usage
+                    config.streaming_display.display_enabled = False
                     result = await asyncio.to_thread(run_mass_with_config, question, config)
                     results[algorithm] = {
                         "answer": result["answer"][:500],

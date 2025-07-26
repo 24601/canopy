@@ -345,7 +345,7 @@ class CanopyA2AAgent:
         consensus_threshold = max(0.0, min(1.0, consensus_threshold))
         max_debate_rounds = max(1, max_debate_rounds)
         
-        # Create configuration
+        # Create configuration with display disabled for A2A usage
         config = create_config_from_models(
             models=models,
             orchestrator_config={
@@ -354,6 +354,8 @@ class CanopyA2AAgent:
                 "max_debate_rounds": max_debate_rounds,
             },
         )
+        # Disable streaming display for A2A agent usage
+        config.streaming_display.display_enabled = False
         
         # Run Canopy
         import time
@@ -454,7 +456,7 @@ class CanopyA2AAgent:
             consensus_threshold = params.get("consensus_threshold", self.consensus_threshold)
             max_debate_rounds = params.get("max_debate_rounds", self.max_debate_rounds)
             
-            # Create configuration
+            # Create configuration with display disabled for A2A usage
             if params.get("models") or params.get("algorithm") or params.get("consensus_threshold") or params.get("max_debate_rounds"):
                 config = create_config_from_models(
                     models=models,
@@ -473,6 +475,8 @@ class CanopyA2AAgent:
                         "max_debate_rounds": self.max_debate_rounds,
                     },
                 )
+            # Disable streaming display for A2A agent usage
+            config.streaming_display.display_enabled = False
             
             # Run Canopy
             import time
