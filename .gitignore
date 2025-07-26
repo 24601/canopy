@@ -205,3 +205,6 @@ gemini_streaming.txt
 
 .ctx
 .marketing/
+
+# External benchmark repos (not part of our codebase)
+benchmarks/ab-mcts-arc2/

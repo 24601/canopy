@@ -8,10 +8,10 @@ from google.genai import types
 
 load_dotenv()
 
-from massgen.types import AgentResponse
+from ..types import AgentResponse
 
 # Import utility functions and tools
-from massgen.utils import generate_random_id
+from ..utils import generate_random_id
 
 
 def add_citations_to_response(response):

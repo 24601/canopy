@@ -11,8 +11,8 @@ from textual.css.query import NoMatches
 from textual.reactive import reactive
 from textual.widgets import Footer, Header, Static
 
-from massgen.logging import get_logger
-from massgen.types import AgentState, SystemState, VoteDistribution
+from ..logging import get_logger
+from ..types import AgentState, SystemState, VoteDistribution
 
 from .themes import ThemeManager
 from .widgets.agent_panel import AgentPanel

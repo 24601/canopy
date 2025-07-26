@@ -87,12 +87,12 @@ zip-safe = false
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["canopy*", "massgen*"]
+include = ["canopy*", "canopy_core*"]
 exclude = ["tests*", "docs*", "future_mass*"]
 
 [tool.setuptools.package-data]
 canopy = ["examples/*.yaml"]
-massgen = ["examples/*.yaml", "backends/.env.example"]
+canopy_core = ["examples/*.yaml", "backends/.env.example"]
 "*" = ["*.json", "*.yaml", "*.yml", "*.md"]
 
 # Black configuration
@@ -160,39 +160,39 @@ module = "future_mass.*"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = "massgen.orchestrator"
+module = "canopy_core.orchestrator"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = "massgen.agent"
+module = "canopy_core.agent"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = "massgen.agents"
+module = "canopy_core.agents"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = "massgen.backends.*"
+module = "canopy_core.backends.*"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = "massgen.main"
+module = "canopy_core.main"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = "massgen.streaming_display"
+module = "canopy_core.streaming_display"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = "massgen.tools"
+module = "canopy_core.tools"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = "massgen.utils"
+module = "canopy_core.utils"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = "massgen.logging"
+module = "canopy_core.logging"
 ignore_errors = true
 
 # pytest configuration
@@ -211,7 +211,7 @@ markers = [
 
 # Coverage configuration
 [tool.coverage.run]
-source = ["agents", "massgen_*"]
+source = ["agents", "canopy_core_*"]
 omit = [
     "*/tests/*",
     "*/test_*",
@@ -251,7 +251,7 @@ ignore-nested-functions = false
 ignore-nested-classes = true
 ignore-setters = false
 fail-under = 80
-exclude = ["setup.py", "docs", "build", "tests", "massgen/orchestrator.py", "massgen/agent.py", "massgen/agents.py", "massgen/backends", "massgen/main.py", "massgen/streaming_display.py", "massgen/tools.py", "massgen/utils.py", "massgen/logging.py"]
+exclude = ["setup.py", "docs", "build", "tests", "canopy_core/orchestrator.py", "canopy_core/agent.py", "canopy_core/agents.py", "canopy_core/backends", "canopy_core/main.py", "canopy_core/streaming_display.py", "canopy_core/tools.py", "canopy_core/utils.py", "canopy_core/logging.py"]
 ignore-regex = ["^get$", "^mock_.*", ".*BaseClass.*"]
 verbose = 2
 quiet = false

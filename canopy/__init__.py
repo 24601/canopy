@@ -7,7 +7,7 @@ Built upon the foundation of MassGen by the AG2 team.
 __version__ = "1.0.0"
 
 # Import key components
-from massgen import (
+from canopy_core import (
     MassConfig,
     MassSystem,
     create_config_from_models,

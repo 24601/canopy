@@ -43,7 +43,7 @@ def mock_orchestrator():
 @pytest.fixture
 def mock_task():
     """Create a mock task for testing."""
-    from massgen.types import TaskInput
+    from canopy_core.types import TaskInput
 
     return TaskInput(question="What is 2+2?", task_id="test-task-123", context={})
 
@@ -51,7 +51,7 @@ def mock_task():
 @pytest.fixture
 def mock_config():
     """Create a mock configuration for testing."""
-    from massgen.types import AgentConfig, MassConfig, ModelConfig, OrchestratorConfig
+    from canopy_core.types import AgentConfig, MassConfig, ModelConfig, OrchestratorConfig
 
     model_config = ModelConfig(
         model="test-model", tools=["test_tool"], max_retries=3, max_rounds=5, inference_timeout=30
@@ -67,7 +67,7 @@ def mock_config():
 @pytest.fixture(autouse=True)
 def reset_algorithm_registry():
     """Reset the algorithm registry after each test."""
-    from massgen.algorithms.factory import _ALGORITHM_REGISTRY
+    from canopy_core.algorithms.factory import _ALGORITHM_REGISTRY
 
     # Save original state
     original = _ALGORITHM_REGISTRY.copy()

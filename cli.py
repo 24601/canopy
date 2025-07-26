@@ -24,7 +24,7 @@ from pathlib import Path
 # Add massgen package to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from massgen import ConfigurationError, create_config_from_models, load_config_from_yaml, run_mass_with_config
+from canopy_core import ConfigurationError, create_config_from_models, load_config_from_yaml, run_mass_with_config
 
 # Color constants for beautiful terminal output
 BRIGHT_CYAN = "\033[96m"

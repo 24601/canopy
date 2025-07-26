@@ -9,7 +9,7 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import DataTable, Label, Static, TabbedContent, TabPane
 
-from massgen.logging import get_logger
+from ...logging import get_logger
 
 logger = get_logger(__name__)
 

@@ -10,8 +10,8 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import DataTable, Label, Static
 
-from massgen.logging import get_logger
-from massgen.types import SystemState
+from ...logging import get_logger
+from ...types import SystemState
 
 logger = get_logger(__name__)
 

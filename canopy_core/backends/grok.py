@@ -8,7 +8,7 @@ from xai_sdk.chat import tool as xai_tool_func
 from xai_sdk.chat import tool_result, user
 from xai_sdk.search import SearchParameters
 
-from massgen.types import AgentResponse
+from ..types import AgentResponse
 
 # Import utility functions and tools
 

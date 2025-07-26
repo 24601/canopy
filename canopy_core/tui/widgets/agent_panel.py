@@ -8,8 +8,8 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Label, Static
 
-from massgen.logging import get_logger
-from massgen.types import AgentState
+from ...logging import get_logger
+from ...types import AgentState
 
 logger = get_logger(__name__)
 

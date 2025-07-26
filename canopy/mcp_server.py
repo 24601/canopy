@@ -35,9 +35,9 @@ from mcp.types import (
 )
 from pydantic import BaseModel, Field
 
-from massgen.config import create_config_from_models, load_config_from_yaml
-from massgen.main import run_mass_with_config
-from massgen.types import MassConfig
+from canopy_core.config import create_config_from_models, load_config_from_yaml
+from canopy_core.main import run_mass_with_config
+from canopy_core.types import MassConfig
 
 logger = logging.getLogger(__name__)
 

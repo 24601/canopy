@@ -5,7 +5,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
-from massgen.types import AlgorithmResult, TaskInput
+from canopy_core.types import AlgorithmResult, TaskInput
 
 
 @dataclass
