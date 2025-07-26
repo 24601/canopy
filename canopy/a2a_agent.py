@@ -277,17 +277,20 @@ class CanopyA2AAgent:
             # Handle different message types
             if message.type == "capabilities":
                 capabilities = self.get_capabilities()
+                capabilities_dict = [cap.to_dict() for cap in capabilities]
                 return A2AResponse(
                     request_id=message.id,
                     status="success",
-                    content=json.dumps({"capabilities": capabilities}),
+                    content=json.dumps({"capabilities": capabilities_dict}),
                     timestamp=datetime.now(timezone.utc).isoformat(),
                 )
             
             elif message.type == "info":
+                capabilities = self.get_capabilities()
+                capabilities_dict = [cap.to_dict() for cap in capabilities]
                 info = {
                     "agent_card": self.get_agent_card().to_dict(),
-                    "capabilities": self.get_capabilities(),
+                    "capabilities": capabilities_dict,
                     "status": "ready",
                 }
                 return A2AResponse(
@@ -521,34 +524,68 @@ class CanopyA2AAgent:
                 "content": "",
             }
     
-    def get_capabilities(self) -> List[Dict[str, Any]]:
+    def get_capabilities(self) -> List[Capability]:
         """Return capability information as a list."""
         return [
-            {
-                "name": "multi-agent-consensus",
-                "description": "Achieve consensus through multiple AI agents",
-                "version": "1.0.0",
-            },
-            {
-                "name": "tree-based-exploration",
-                "description": "Explore solution space using tree-based algorithms",
-                "version": "1.0.0",
-            },
-            {
-                "name": "parallel-processing",
-                "description": "Process queries in parallel across agents",
-                "version": "1.0.0",
-            },
-            {
-                "name": "model-agnostic",
-                "description": "Support for multiple AI model providers",
-                "version": "1.0.0",
-            },
-            {
-                "name": "streaming-responses",
-                "description": "Stream responses as they are generated",
-                "version": "1.0.0",
-            },
+            Capability(
+                name="multi-agent-consensus",
+                description="Achieve consensus through multiple AI agents",
+                version="1.0.0",
+                parameters={
+                    "models": {
+                        "type": "array",
+                        "description": "List of AI models to use",
+                        "required": False,
+                        "default": ["gpt-4.1", "claude-opus-4", "gemini-2.5-pro", "grok-4"]
+                    },
+                    "consensus_threshold": {
+                        "type": "number",
+                        "description": "Threshold for reaching consensus",
+                        "min": 0.0,
+                        "max": 1.0,
+                        "default": 0.66
+                    },
+                    "max_debate_rounds": {
+                        "type": "integer",
+                        "description": "Maximum number of debate rounds",
+                        "min": 1,
+                        "default": 3
+                    }
+                }
+            ),
+            Capability(
+                name="tree-based-exploration",
+                description="Explore solution space using tree-based algorithms",
+                version="1.0.0",
+            ),
+            Capability(
+                name="parallel-processing",
+                description="Process queries in parallel across agents",
+                version="1.0.0",
+            ),
+            Capability(
+                name="algorithm-selection",
+                description="Select from multiple consensus algorithms",
+                version="1.0.0",
+                parameters={
+                    "algorithm": {
+                        "type": "string",
+                        "description": "Consensus algorithm to use",
+                        "enum": ["massgen", "treequest"],
+                        "default": "massgen"
+                    }
+                }
+            ),
+            Capability(
+                name="model-agnostic",
+                description="Support for multiple AI model providers",
+                version="1.0.0",
+            ),
+            Capability(
+                name="streaming-responses",
+                description="Stream responses as they are generated",
+                version="1.0.0",
+            ),
         ]
 
 
@@ -571,7 +608,8 @@ def create_a2a_handlers(config=None):
     
     def handle_capabilities_request():
         """Handle GET /capabilities request."""
-        return agent.get_capabilities()
+        capabilities = agent.get_capabilities()
+        return [cap.to_dict() for cap in capabilities]
     
     def handle_message(message: Dict[str, Any]):
         """Handle POST /message request.
