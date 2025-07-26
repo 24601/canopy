@@ -72,36 +72,36 @@ if [ ! -f .env ]; then
     echo -e "\nYou'll need at least one API key to use Canopy."
     echo -e "We recommend OpenRouter for access to all models with a single key."
     echo -e "\nGet your free API key at: ${BLUE}https://openrouter.ai/${NC}"
-    
+
     echo -e "\n${YELLOW}Enter your API key (or press Enter to skip):${NC}"
-    
+
     # Create .env file
     touch .env
-    
+
     # OpenRouter
     read -p "OpenRouter API Key: " OPENROUTER_KEY
     if [ ! -z "$OPENROUTER_KEY" ]; then
         echo "OPENROUTER_API_KEY=$OPENROUTER_KEY" >> .env
     fi
-    
+
     # Optional: Other providers
     echo -e "\n${YELLOW}Optional: Enter other API keys (press Enter to skip)${NC}"
-    
+
     read -p "OpenAI API Key: " OPENAI_KEY
     if [ ! -z "$OPENAI_KEY" ]; then
         echo "OPENAI_API_KEY=$OPENAI_KEY" >> .env
     fi
-    
+
     read -p "Anthropic API Key: " ANTHROPIC_KEY
     if [ ! -z "$ANTHROPIC_KEY" ]; then
         echo "ANTHROPIC_API_KEY=$ANTHROPIC_KEY" >> .env
     fi
-    
+
     read -p "Google AI API Key: " GEMINI_KEY
     if [ ! -z "$GEMINI_KEY" ]; then
         echo "GEMINI_API_KEY=$GEMINI_KEY" >> .env
     fi
-    
+
     echo -e "${GREEN}✓ .env file created${NC}"
 else
     echo -e "${GREEN}✓ .env file found${NC}"

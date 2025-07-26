@@ -391,7 +391,7 @@ Canopy is built upon the excellent foundation provided by [MassGen](https://gith
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
 When contributing, please:
-1. Maintain test coverage above 90%
+1. Write comprehensive tests for new features
 2. Follow the existing code style
 3. Add appropriate documentation
 4. Credit any borrowed ideas or code

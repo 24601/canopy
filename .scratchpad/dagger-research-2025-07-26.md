@@ -1,7 +1,7 @@
 # Dagger CI/CD Pipeline Research - State of the Art 2025
 
-*Research Date: July 26, 2025*  
-*Status: Complete*  
+*Research Date: July 26, 2025*
+*Status: Complete*
 *Delete after: August 26, 2025*
 
 ## Executive Summary
@@ -30,7 +30,7 @@ Dagger represents the current state-of-the-art in CI/CD pipeline technology, mov
 ### 4. Enterprise Features
 - **SOC2 Compliance**: Enterprise-grade security certification
 - **Private Modules**: Support for proprietary code and internal registries
-- **Network Support**: Corporate proxy and CA certificate handling  
+- **Network Support**: Corporate proxy and CA certificate handling
 - **Git Credentials**: Seamless private repository access
 
 ## Architectural Patterns

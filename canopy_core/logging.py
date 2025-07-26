@@ -57,7 +57,12 @@ class MassLogManager:
         └── console.log                        # Python logging output
     """
 
-    def __init__(self, log_dir: str = "logs", session_id: Optional[str] = None, non_blocking: bool = False):
+    def __init__(
+        self,
+        log_dir: str = "logs",
+        session_id: Optional[str] = None,
+        non_blocking: bool = False,
+    ):
         """
         Initialize the logging system.
 
@@ -412,7 +417,11 @@ class MassLogManager:
             new_status: New status
             phase: Current workflow phase
         """
-        data = {"old_status": old_status, "new_status": new_status, "status_change": f"{old_status} {new_status}"}
+        data = {
+            "old_status": old_status,
+            "new_status": new_status,
+            "status_change": f"{old_status} {new_status}",
+        }
 
         self.log_event("agent_status_change", agent_id, phase, data)
 
@@ -437,7 +446,7 @@ class MassLogManager:
             agent_states[agent_id] = {
                 "status": agent_state.status,
                 "curr_answer": agent_state.curr_answer,
-                "vote_target": agent_state.curr_vote.target_id if agent_state.curr_vote else None,
+                "vote_target": (agent_state.curr_vote.target_id if agent_state.curr_vote else None),
                 "execution_time": agent_state.execution_time,
                 "update_count": len(agent_state.updated_answers),
                 "seen_updates_timestamps": agent_state.seen_updates_timestamps,
@@ -447,14 +456,24 @@ class MassLogManager:
             all_agent_answers[agent_id] = {
                 "current_answer": agent_state.curr_answer,
                 "answer_history": [
-                    {"timestamp": update.timestamp, "answer": update.answer, "status": update.status}
+                    {
+                        "timestamp": update.timestamp,
+                        "answer": update.answer,
+                        "status": update.status,
+                    }
                     for update in agent_state.updated_answers
                 ],
             }
 
         # Collect voting information
         for vote in orchestrator.votes:
-            vote_records.append({"voter_id": vote.voter_id, "target_id": vote.target_id, "timestamp": vote.timestamp})
+            vote_records.append(
+                {
+                    "voter_id": vote.voter_id,
+                    "target_id": vote.target_id,
+                    "timestamp": vote.timestamp,
+                }
+            )
 
         # Calculate voting status
         vote_counts = Counter(vote.target_id for vote in orchestrator.votes)
@@ -505,7 +524,12 @@ class MassLogManager:
         return system_snapshot
 
     def log_voting_event(
-        self, voter_id: int, target_id: int, phase: str = "unknown", reason: str = "", orchestrator=None
+        self,
+        voter_id: int,
+        target_id: int,
+        phase: str = "unknown",
+        reason: str = "",
+        orchestrator=None,
     ):
         """
         Log a voting event with detailed information and immediately save to file.
@@ -593,7 +617,11 @@ class MassLogManager:
         self.log_event("phase_transition", phase=new_phase, data=data)
 
     def log_notification_sent(
-        self, agent_id: int, notification_type: str, content_preview: str, phase: str = "unknown"
+        self,
+        agent_id: int,
+        notification_type: str,
+        content_preview: str,
+        phase: str = "unknown",
     ):
         """
         Log when a notification is sent to an agent.
@@ -609,7 +637,7 @@ class MassLogManager:
 
         data = {
             "notification_type": notification_type,
-            "content_preview": content_preview[:200] + "..." if len(content_preview) > 200 else content_preview,
+            "content_preview": (content_preview[:200] + "..." if len(content_preview) > 200 else content_preview),
             "content_length": len(content_preview),
             "total_notifications_sent": self.event_counters["notifications_sent"],
         }
@@ -638,12 +666,20 @@ class MassLogManager:
         with self._lock:
             self.event_counters["agent_restarts"] += 1
 
-        data = {"restart_reason": reason, "total_restarts": self.event_counters["agent_restarts"]}
+        data = {
+            "restart_reason": reason,
+            "total_restarts": self.event_counters["agent_restarts"],
+        }
 
         self.log_event("agent_restart", agent_id, phase, data)
 
         # Log to agent display file
-        restart_entry = {"timestamp": time.time(), "event": "agent_restarted", "phase": phase, "reason": reason}
+        restart_entry = {
+            "timestamp": time.time(),
+            "event": "agent_restarted",
+            "phase": phase,
+            "reason": reason,
+        }
         self._write_agent_display_log(agent_id, restart_entry)
 
     def log_debate_started(self, phase: str = "unknown"):
@@ -757,7 +793,11 @@ class MassLogManager:
                     if agent_id not in agent_activities:
                         agent_activities[agent_id] = []
                     agent_activities[agent_id].append(
-                        {"timestamp": entry.timestamp, "event_type": entry.event_type, "phase": entry.phase}
+                        {
+                            "timestamp": entry.timestamp,
+                            "event_type": entry.event_type,
+                            "phase": entry.phase,
+                        }
                     )
 
             return {
@@ -804,7 +844,11 @@ class MassLogManager:
     def cleanup(self):
         """Clean up and finalize the logging session."""
         self.log_event(
-            "session_ended", data={"end_timestamp": time.time(), "total_events_logged": len(self.log_entries)}
+            "session_ended",
+            data={
+                "end_timestamp": time.time(),
+                "total_events_logged": len(self.log_entries),
+            },
         )
 
     def get_session_statistics(self) -> Dict[str, Any]:
@@ -842,7 +886,11 @@ def initialize_logging(
     global _log_manager
 
     # Check environment variable for non-blocking mode
-    env_non_blocking = os.getenv("MassGen_NON_BLOCKING_LOGGING", "").lower() in ("true", "1", "yes")
+    env_non_blocking = os.getenv("MassGen_NON_BLOCKING_LOGGING", "").lower() in (
+        "true",
+        "1",
+        "yes",
+    )
     if env_non_blocking:
         print("🔧 MassGen_NON_BLOCKING_LOGGING environment variable detected - enabling non-blocking mode")
         non_blocking = True

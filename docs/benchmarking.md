@@ -175,18 +175,18 @@ benchmarks:
       - "Explain quantum mechanics to a 10-year-old"
       - "Design a carbon-neutral data center"
       - "Solve the traveling salesman problem for 10 cities"
-    
+
     models: ["gpt-4o", "claude-3-sonnet", "gemini-pro"]
     algorithms: ["massgen", "treequest"]
     num_runs: 5
     max_duration: 300
-    
+
   - name: "factual_questions"
     questions:
       - "What is the capital of Mongolia?"
       - "Who invented the transistor?"
       - "When did World War I end?"
-    
+
     models: ["gpt-4o-mini", "claude-3-haiku"]
     algorithms: ["massgen", "treequest"]
     num_runs: 3
@@ -203,7 +203,7 @@ description: "ARC-AGI-2 pattern recognition benchmarks"
 # TreeQuest configuration (matches Sakana AI paper)
 treequest_models:
   - "gpt-4o-mini"
-  - "gemini-2.5-pro" 
+  - "gemini-2.5-pro"
   - "openrouter/deepseek/deepseek-r1"
 
 # MassGen configuration
@@ -373,10 +373,10 @@ def evaluate_solution_quality(reference, candidate):
     semantic_score = compute_semantic_similarity(reference, candidate)
     factual_score = check_factual_accuracy(candidate)
     coherence_score = assess_coherence(candidate)
-    
+
     return {
         "semantic": semantic_score,
-        "factual": factual_score, 
+        "factual": factual_score,
         "coherence": coherence_score,
         "overall": (semantic_score + factual_score + coherence_score) / 3
     }
@@ -393,13 +393,13 @@ def run_parallel_benchmarks(config, num_workers=4):
     """Run benchmarks in parallel across multiple processes."""
     with ProcessPoolExecutor(max_workers=num_workers) as executor:
         futures = []
-        
+
         for benchmark in config["benchmarks"]:
             future = executor.submit(run_single_benchmark, benchmark)
             futures.append(future)
-        
+
         results = [future.result() for future in futures]
-    
+
     return results
 ```
 
@@ -418,15 +418,15 @@ We welcome contributions of new benchmarks! Please follow these guidelines:
 # new_benchmark_example.py
 class MyCustomBenchmark:
     """Custom benchmark for domain-specific evaluation."""
-    
+
     def __init__(self, config):
         self.config = config
-    
+
     def run_evaluation(self, algorithm, models):
         """Run custom evaluation."""
         # Implement your benchmark logic
         pass
-    
+
     def compute_metrics(self, results):
         """Compute domain-specific metrics."""
         # Return standardized metrics dictionary

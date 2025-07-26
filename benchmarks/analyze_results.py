@@ -92,7 +92,8 @@ class BenchmarkAnalyzer:
                     "avg_consensus_rate": statistics.mean([d["rate"] for d in consensus_data]),
                     "avg_debate_rounds": statistics.mean([d["debate_rounds"] for d in consensus_data]),
                     "correlation_time_consensus": self._calculate_correlation(
-                        [d["execution_time"] for d in consensus_data], [d["rate"] for d in consensus_data]
+                        [d["execution_time"] for d in consensus_data],
+                        [d["rate"] for d in consensus_data],
                     ),
                 }
 
@@ -125,7 +126,7 @@ class BenchmarkAnalyzer:
         if consensus_rates:
             analysis["consensus"] = {
                 "mean": statistics.mean(consensus_rates),
-                "std": statistics.stdev(consensus_rates) if len(consensus_rates) > 1 else 0,
+                "std": (statistics.stdev(consensus_rates) if len(consensus_rates) > 1 else 0),
                 "min": min(consensus_rates),
                 "max": max(consensus_rates),
             }
@@ -176,20 +177,20 @@ class BenchmarkAnalyzer:
             report.append(f"- Benchmarks run: {data['num_benchmarks']}")
 
             exec_time = data["execution_time"]
-            report.append(f"- Execution time:")
+            report.append("- Execution time:")
             report.append(f"  - Mean: {exec_time['mean']:.2f}s (± {exec_time['std']:.2f}s)")
             report.append(f"  - Median: {exec_time['median']:.2f}s")
             report.append(f"  - Range: [{exec_time['min']:.2f}s, {exec_time['max']:.2f}s]")
 
             if "consensus" in data:
                 consensus = data["consensus"]
-                report.append(f"- Consensus rate:")
+                report.append("- Consensus rate:")
                 report.append(f"  - Mean: {consensus['mean']:.1%} (± {consensus['std']:.1%})")
                 report.append(f"  - Range: [{consensus['min']:.1%}, {consensus['max']:.1%}]")
 
             if "debate_rounds" in data:
                 debate = data["debate_rounds"]
-                report.append(f"- Debate rounds:")
+                report.append("- Debate rounds:")
                 report.append(f"  - Mean: {debate['mean']:.1f} (± {debate['std']:.1f})")
 
         # Performance by agent count
@@ -226,7 +227,10 @@ class BenchmarkAnalyzer:
 
         # Find best algorithm for speed
         if len(analysis["algorithms"]) > 1:
-            fastest_algo = min(analysis["algorithms"].items(), key=lambda x: x[1]["execution_time"]["mean"])
+            fastest_algo = min(
+                analysis["algorithms"].items(),
+                key=lambda x: x[1]["execution_time"]["mean"],
+            )
             report.append(
                 f"\n- **Fastest algorithm**: {fastest_algo[0]} "
                 f"(avg: {fastest_algo[1]['execution_time']['mean']:.2f}s)"
@@ -260,7 +264,10 @@ def main():
     """Main entry point for analysis."""
     parser = argparse.ArgumentParser(description="Analyze MassGen benchmark results")
     parser.add_argument(
-        "--results-dir", type=str, default="benchmarks/results", help="Directory containing benchmark results"
+        "--results-dir",
+        type=str,
+        default="benchmarks/results",
+        help="Directory containing benchmark results",
     )
     parser.add_argument("--pattern", type=str, default="*.json", help="File pattern to match")
     parser.add_argument("--output", type=str, help="Output file for report")

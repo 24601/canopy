@@ -1,15 +1,12 @@
 import os
 
 from dotenv import load_dotenv
-
-load_dotenv()
-
 from openai import OpenAI
 
 from ..types import AgentResponse
-
-# Import utility functions
 from ..utils import function_to_json
+
+load_dotenv()
 
 
 def parse_completion(response, add_citations=True):

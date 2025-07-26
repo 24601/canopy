@@ -55,28 +55,28 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
-      
+
       # Server Configuration
       - CANOPY_PORT=8000
       - CANOPY_HOST=0.0.0.0
       - CANOPY_WORKERS=4
-      
+
       # Default Models
       - CANOPY_DEFAULT_MODELS=gpt-4o,claude-3-sonnet,gemini-pro
-      
+
     volumes:
       # Persist logs
       - ./logs:/app/logs
       # Custom config
       - ./config:/app/config
-      
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-      
+
     restart: unless-stopped
 ```
 
@@ -281,7 +281,7 @@ services:
   canopy:
     networks:
       - canopy-network
-      
+
 networks:
   canopy-network:
     driver: bridge

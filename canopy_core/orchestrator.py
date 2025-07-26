@@ -93,7 +93,11 @@ class MassOrchestrator:
             agent.orchestrator = self
 
             add_span_attributes(
-                {"agent.id": agent.agent_id, "agent.model": agent.model, "agent.type": type(agent).__name__}
+                {
+                    "agent.id": agent.agent_id,
+                    "agent.model": agent.model,
+                    "agent.type": type(agent).__name__,
+                }
             )
 
     def _log_event(self, event_type: str, data: Dict[str, Any]):
@@ -113,7 +117,7 @@ class MassOrchestrator:
             {
                 "agent.id": agent_id,
                 "answer.length": len(answer),
-                "massgen.phase": self.system_state.phase if self.system_state else "unknown",
+                "massgen.phase": (self.system_state.phase if self.system_state else "unknown"),
             }
         )
 
@@ -201,13 +205,13 @@ class MassOrchestrator:
                     "status": state.status,
                     "update_times": len(state.updated_answers),
                     "chat_round": state.chat_round,
-                    "vote_target": state.curr_vote.target_id if state.curr_vote else None,
+                    "vote_target": (state.curr_vote.target_id if state.curr_vote else None),
                     "execution_time": state.execution_time,
                 }
                 for agent_id, state in self.agent_states.items()
             },
             "voting_status": self._get_voting_status(),
-            "runtime": (time.time() - self.system_state.start_time) if self.system_state.start_time else 0,
+            "runtime": ((time.time() - self.system_state.start_time) if self.system_state.start_time else 0),
         }
 
     @traced("cast_vote")
@@ -225,7 +229,7 @@ class MassOrchestrator:
                 "voter.id": voter_id,
                 "target.id": target_id,
                 "reason.length": len(reason),
-                "massgen.phase": self.system_state.phase if self.system_state else "unknown",
+                "massgen.phase": (self.system_state.phase if self.system_state else "unknown"),
             }
         )
 
@@ -259,7 +263,12 @@ class MassOrchestrator:
                 logger.info(f"   ✨ Agent {voter_id} new vote for Agent {target_id}")
 
             # Add vote record to permanent history (only for actual changes)
-            vote = VoteRecord(voter_id=voter_id, target_id=target_id, reason=reason, timestamp=time.time())
+            vote = VoteRecord(
+                voter_id=voter_id,
+                target_id=target_id,
+                reason=reason,
+                timestamp=time.time(),
+            )
 
             # record the vote in the system's vote history
             self.votes.append(vote)
@@ -360,7 +369,6 @@ class MassOrchestrator:
 
             for other_agent_id, state in self.agent_states.items():
                 if other_agent_id != agent_id and state.status == "voted":
-
                     # Restart the voted agent
                     state.status = "working"
                     # This vote should be cleared as answers have been updated
@@ -574,9 +582,9 @@ class MassOrchestrator:
                 "system_version": "MassGen v1.0",
             },
             "task_information": {
-                "question": self.system_state.task.question if self.system_state.task else None,
-                "task_id": self.system_state.task.task_id if self.system_state.task else None,
-                "context": self.system_state.task.context if self.system_state.task else None,
+                "question": (self.system_state.task.question if self.system_state.task else None),
+                "task_id": (self.system_state.task.task_id if self.system_state.task else None),
+                "context": (self.system_state.task.context if self.system_state.task else None),
             },
             "system_configuration": {
                 "max_duration": self.max_duration,
@@ -590,12 +598,16 @@ class MassOrchestrator:
                     "updates_count": len(state.updated_answers),
                     "chat_length": len(state.chat_history),
                     "chat_round": state.chat_round,
-                    "vote_target": state.curr_vote.target_id if state.curr_vote else None,
+                    "vote_target": (state.curr_vote.target_id if state.curr_vote else None),
                     "execution_time": state.execution_time,
                     "execution_start_time": state.execution_start_time,
                     "execution_end_time": state.execution_end_time,
                     "updated_answers": [
-                        {"timestamp": update.timestamp, "status": update.status, "answer_length": len(update.answer)}
+                        {
+                            "timestamp": update.timestamp,
+                            "status": update.status,
+                            "answer_length": len(update.answer),
+                        }
                         for update in state.updated_answers
                     ],
                 }
@@ -612,7 +624,10 @@ class MassOrchestrator:
                     for vote in self.votes
                 ],
                 "vote_timeline": [
-                    {"timestamp": vote.timestamp, "event": f"Agent {vote.voter_id} → Agent {vote.target_id}"}
+                    {
+                        "timestamp": vote.timestamp,
+                        "event": f"Agent {vote.voter_id} → Agent {vote.target_id}",
+                    }
                     for vote in self.votes
                 ],
             },
@@ -647,7 +662,9 @@ class MassOrchestrator:
         orchestration_id = f"orch_{int(time.time())}"
 
         with trace_context(
-            correlation_id=correlation_id, orchestration_id=orchestration_id, algorithm=self.algorithm_name
+            correlation_id=correlation_id,
+            orchestration_id=orchestration_id,
+            algorithm=self.algorithm_name,
         ):
             add_span_attributes(
                 {
@@ -847,11 +864,14 @@ class MassOrchestrator:
             executor.shutdown(wait=True)
 
     def _start_agent_if_working(
-        self, agent_id: int, task: TaskInput, executor: ThreadPoolExecutor, active_futures: Dict
+        self,
+        agent_id: int,
+        task: TaskInput,
+        executor: ThreadPoolExecutor,
+        active_futures: Dict,
     ):
         """Start an agent if it's in working status and not already running."""
         if self.agent_states[agent_id].status == "working" and agent_id not in active_futures:
-
             self.agent_states[agent_id].execution_start_time = time.time()
             future = executor.submit(self._run_single_agent, agent_id, task)
             active_futures[agent_id] = future
@@ -860,7 +880,13 @@ class MassOrchestrator:
     @traced("run_single_agent")
     def _run_single_agent(self, agent_id: int, task: TaskInput):
         """Run a single agent's work_on_task method."""
-        add_span_attributes({"agent.id": agent_id, "agent.model": self.agents[agent_id].model, "task.id": task.task_id})
+        add_span_attributes(
+            {
+                "agent.id": agent_id,
+                "agent.model": self.agents[agent_id].model,
+                "task.id": task.task_id,
+            }
+        )
 
         agent = self.agents[agent_id]
         try:
@@ -901,7 +927,6 @@ class MassOrchestrator:
         logger.info("🔄 Restarting all agents for debate")
 
         with self._lock:
-
             # Update streaming display
             if self.streaming_orchestrator:
                 self.streaming_orchestrator.reset_consensus()
@@ -914,7 +939,10 @@ class MassOrchestrator:
                 self.log_manager.log_phase_transition(
                     old_phase=self.system_state.phase,
                     new_phase="collaboration",
-                    additional_data={"reason": "no_consensus_reached", "debate_round": True},
+                    additional_data={
+                        "reason": "no_consensus_reached",
+                        "debate_round": True,
+                    },
                 )
 
             # Reset agent statuses and add debate instruction to conversation
@@ -933,7 +961,9 @@ class MassOrchestrator:
                     # Log agent restart
                     if self.log_manager:
                         self.log_manager.log_agent_restart(
-                            agent_id=agent_id, reason="debate_phase_restart", phase="collaboration"
+                            agent_id=agent_id,
+                            reason="debate_phase_restart",
+                            phase="collaboration",
                         )
 
             # Update system phase

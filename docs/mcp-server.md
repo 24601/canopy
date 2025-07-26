@@ -119,21 +119,21 @@ List of supported AI models organized by provider:
 ### Basic Query
 
 ```
-Can you use canopy to analyze the environmental impact of electric vehicles? 
+Can you use canopy to analyze the environmental impact of electric vehicles?
 Use 3 different models for a comprehensive perspective.
 ```
 
 ### Algorithm Comparison
 
 ```
-Use canopy_analyze to compare how massgen and treequest algorithms 
+Use canopy_analyze to compare how massgen and treequest algorithms
 handle this step-by-step problem: "How do you build a treehouse?"
 ```
 
 ### Using Configuration
 
 ```
-Use canopy_query_config with the thorough configuration to research 
+Use canopy_query_config with the thorough configuration to research
 the latest advances in quantum computing.
 ```
 
@@ -151,7 +151,7 @@ export PYTHONPATH=/path/to/canopy:$PYTHONPATH
 
 Make sure all required API keys are set in your environment or Claude Desktop config:
 - OPENAI_API_KEY
-- ANTHROPIC_API_KEY  
+- ANTHROPIC_API_KEY
 - GEMINI_API_KEY
 - XAI_API_KEY
 - OPENROUTER_API_KEY (optional)

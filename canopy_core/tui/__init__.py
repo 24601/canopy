@@ -1,5 +1,5 @@
 """Textual-based Terminal User Interface for MassGen."""
 
-from .app import MassGenApp
+from .advanced_app import AdvancedCanopyTUI
 
-__all__ = ["MassGenApp"]
+__all__ = ["AdvancedCanopyTUI"]

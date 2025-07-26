@@ -48,7 +48,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
-
+tests/tui/tui_test_results*
 # Translations
 *.mo
 *.pot

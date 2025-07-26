@@ -18,12 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      
+
       - name: Cache pip packages
         uses: actions/cache@v4
         with:
@@ -31,21 +31,21 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt', '**/pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e .[dev]
-      
+
       - name: Run Black formatter check
         run: black --check canopy_core/ canopy/
-      
+
       - name: Run isort import checker
         run: isort --check-only canopy_core/ canopy/
-      
+
       - name: Run Flake8 linter
         run: flake8 canopy_core/ canopy/
-      
+
       - name: Run interrogate docstring coverage
         run: interrogate -vv canopy_core/ canopy/
 
@@ -54,12 +54,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      
+
       - name: Cache pip packages
         uses: actions/cache@v4
         with:
@@ -67,12 +67,12 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt', '**/pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e .[dev]
-      
+
       - name: Run mypy type checker
         run: mypy canopy_core/ canopy/
 
@@ -81,12 +81,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      
+
       - name: Cache pip packages
         uses: actions/cache@v4
         with:
@@ -94,12 +94,12 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt', '**/pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e .[dev]
-      
+
       - name: Run Bandit security linter
         run: |
           bandit -r canopy_core/ canopy/ -f json -o bandit-report.json || true
@@ -110,11 +110,11 @@ jobs:
               exit 1
             fi
           fi
-      
+
       - name: Run Safety check
         run: |
           pip freeze | safety check --stdin --json || true
-      
+
       - name: Check for secrets
         uses: trufflesecurity/trufflehog@main
         with:
@@ -129,15 +129,15 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         python-version: ['3.12']
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      
+
       - name: Cache pip packages
         uses: actions/cache@v4
         with:
@@ -145,46 +145,46 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt', '**/pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e .[dev]
-      
+
       - name: Create test directory
         run: mkdir -p tests
-      
+
       - name: Create initial test file
         run: |
           cat > tests/test_algorithms.py << 'EOF'
           """Tests for algorithm implementations."""
           import pytest
           from canopy_core.algorithms import AlgorithmFactory, MassGenAlgorithm, TreeQuestAlgorithm
-          
+
           def test_algorithm_factory():
               """Test that algorithms can be created via factory."""
               # This is a placeholder test
               available = AlgorithmFactory._ALGORITHM_REGISTRY
               assert "massgen" in available
               assert "treequest" in available
-          
+
           def test_massgen_algorithm_name():
               """Test MassGen algorithm name."""
               # Create minimal test data
               algorithm = MassGenAlgorithm({}, {}, None, {})
               assert algorithm.get_algorithm_name() == "massgen"
-          
+
           def test_treequest_algorithm_name():
               """Test TreeQuest algorithm name."""
               # Create minimal test data
               algorithm = TreeQuestAlgorithm({}, {}, None, {})
               assert algorithm.get_algorithm_name() == "treequest"
           EOF
-      
+
       - name: Run pytest with coverage
         run: |
           pytest tests/ -v --cov=canopy_core --cov=canopy --cov-report=xml --cov-report=term
-      
+
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
         uses: codecov/codecov-action@v4
@@ -198,20 +198,20 @@ jobs:
     name: Integration Tests
     runs-on: ubuntu-latest
     needs: [lint, type-check, security]
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e .[dev]
-      
+
       - name: Run integration tests with API keys
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -237,26 +237,26 @@ jobs:
     name: Build Package
     runs-on: ubuntu-latest
     needs: [test]
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
-      
+
       - name: Install build tools
         run: |
           python -m pip install --upgrade pip
           pip install build twine
-      
+
       - name: Build distribution
         run: python -m build
-      
+
       - name: Check distribution
         run: twine check dist/*
-      
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:

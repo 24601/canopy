@@ -1,5 +1,8 @@
 # Algorithm extensions for MassGen
 # Based on the original MassGen framework: https://github.com/Leezekun/MassGen
+
+# Algorithm extensions for Canopy
+# Based on the original MassGen framework: https://github.com/Leezekun/MassGen
 # Extensions and modifications for pluggable algorithms by Basit Mustafa (@24601)
 """
 Factory pattern for creating orchestration algorithms.
@@ -27,7 +30,7 @@ def register_algorithm(name: str, algorithm_class: Type[BaseAlgorithm]) -> None:
         raise ValueError(f"Algorithm '{name}' is already registered")
 
     if not issubclass(algorithm_class, BaseAlgorithm):
-        raise TypeError(f"Algorithm class must inherit from BaseAlgorithm")
+        raise TypeError("Algorithm class must inherit from BaseAlgorithm")
 
     _ALGORITHM_REGISTRY[name] = algorithm_class
 

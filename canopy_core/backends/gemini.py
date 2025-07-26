@@ -6,12 +6,10 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-load_dotenv()
-
 from ..types import AgentResponse
-
-# Import utility functions and tools
 from ..utils import generate_random_id
+
+load_dotenv()
 
 
 def add_citations_to_response(response):
@@ -59,7 +57,6 @@ def parse_completion(completion, add_citations=True):
     code = []
     citations = []
     function_calls = []
-    reasoning_items = []
 
     # Handle response from the official SDK
     # Always parse candidates.content.parts for complete information
@@ -104,7 +101,12 @@ def parse_completion(completion, add_citations=True):
                                 func_args = part.function_call.args
 
                         function_calls.append(
-                            {"type": "function_call", "call_id": call_id, "name": func_name, "arguments": func_args}
+                            {
+                                "type": "function_call",
+                                "call_id": call_id,
+                                "name": func_name,
+                                "arguments": func_args,
+                            }
                         )
                 # Handle function responses
                 elif hasattr(part, "function_response"):
@@ -249,7 +251,7 @@ def process_message(
 
     if custom_functions and has_native_tools:
         print(
-            f"[WARNING] Gemini API doesn't support combining native tools with custom functions. Prioritizing built-in tools."
+            "[WARNING] Gemini API doesn't support combining native tools with custom functions. Prioritizing built-in tools."
         )
     elif custom_functions and not has_native_tools:
         # add custom functions to the tools
@@ -258,16 +260,20 @@ def process_message(
     # Set up safety settings
     safety_settings = [
         types.SafetySetting(
-            category=types.HarmCategory.HARM_CATEGORY_HARASSMENT, threshold=types.HarmBlockThreshold.BLOCK_NONE
+            category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+            threshold=types.HarmBlockThreshold.BLOCK_NONE,
         ),
         types.SafetySetting(
-            category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold=types.HarmBlockThreshold.BLOCK_NONE
+            category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+            threshold=types.HarmBlockThreshold.BLOCK_NONE,
         ),
         types.SafetySetting(
-            category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold=types.HarmBlockThreshold.BLOCK_NONE
+            category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+            threshold=types.HarmBlockThreshold.BLOCK_NONE,
         ),
         types.SafetySetting(
-            category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold=types.HarmBlockThreshold.BLOCK_NONE
+            category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+            threshold=types.HarmBlockThreshold.BLOCK_NONE,
         ),
     ]
 
@@ -298,7 +304,6 @@ def process_message(
 
                 # Code streaming tracking
                 code_lines_shown = 0
-                current_code_chunk = ""
                 truncation_message_sent = False  # Track if truncation message was sent
 
                 stream_response = client.models.generate_content_stream(**request_params)

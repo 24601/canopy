@@ -1,11 +1,12 @@
 """LLM-as-judge evaluation framework for multi-agent consensus quality."""
 
-import json
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
-from canopy_core.types import AlgorithmResult, TaskInput
+if TYPE_CHECKING:
+    from canopy_core.algorithms.base import AlgorithmResult
+    from canopy_core.types import TaskInput
 
 
 @dataclass
@@ -29,7 +30,7 @@ class EvaluationResult:
     weaknesses: List[str]
     consensus_quality: str
     reasoning: str
-    metadata: Dict[str, any] = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 class LLMJudge:
@@ -86,7 +87,11 @@ class LLMJudge:
         ),
     ]
 
-    def __init__(self, judge_model: Optional[any] = None, criteria: Optional[List[EvaluationCriteria]] = None):
+    def __init__(
+        self,
+        judge_model: Optional[Any] = None,
+        criteria: Optional[List[EvaluationCriteria]] = None,
+    ):
         """Initialize the LLM judge.
 
         Args:
@@ -96,7 +101,12 @@ class LLMJudge:
         self.judge_model = judge_model
         self.criteria = criteria or self.DEFAULT_CRITERIA
 
-    def evaluate(self, task: TaskInput, result: AlgorithmResult, ground_truth: Optional[str] = None) -> EvaluationResult:
+    def evaluate(
+        self,
+        task: TaskInput,
+        result: AlgorithmResult,
+        ground_truth: Optional[str] = None,
+    ) -> EvaluationResult:
         """Evaluate a multi-agent result using LLM-as-judge.
 
         Args:
@@ -114,7 +124,8 @@ class LLMJudge:
         judgment = self._get_llm_judgment(prompt)
 
         # Parse and structure the evaluation
-        return self._parse_judgment(judgment, task.task_id)
+        task_id = task.task_id or "unknown"
+        return self._parse_judgment(judgment, task_id)
 
     def _build_evaluation_prompt(self, task: TaskInput, result: AlgorithmResult, ground_truth: Optional[str]) -> str:
         """Build the evaluation prompt for the judge LLM."""
@@ -168,12 +179,17 @@ Provide your evaluation in the following JSON format:
 
         return prompt
 
-    def _get_llm_judgment(self, prompt: str) -> Dict:
+    def _get_llm_judgment(self, prompt: str) -> Dict[str, Any]:
         """Get judgment from the LLM judge."""
         if self.judge_model is None:
             # Return mock judgment for testing
             return {
-                "criteria_scores": {"correctness": 4, "completeness": 4, "coherence": 5, "consensus_quality": 4},
+                "criteria_scores": {
+                    "correctness": 4,
+                    "completeness": 4,
+                    "coherence": 5,
+                    "consensus_quality": 4,
+                },
                 "strengths": ["Clear reasoning", "Well-structured response"],
                 "weaknesses": ["Could be more comprehensive"],
                 "consensus_quality_assessment": "Agents reached good consensus",
@@ -184,15 +200,27 @@ Provide your evaluation in the following JSON format:
         # response = self.judge_model.generate(prompt)
         # return json.loads(response)
 
-    def _parse_judgment(self, judgment: Dict, task_id: str) -> EvaluationResult:
+        # For now, return mock judgment until real implementation
+        return {
+            "criteria_scores": {
+                "correctness": 4,
+                "completeness": 4,
+                "coherence": 5,
+                "consensus_quality": 4,
+            },
+            "strengths": ["Clear reasoning", "Well-structured response"],
+            "weaknesses": ["Could be more comprehensive"],
+            "consensus_quality_assessment": "Agents reached good consensus",
+            "overall_reasoning": "The response demonstrates good quality overall",
+        }
+
+    def _parse_judgment(self, judgment: Dict[str, Any], task_id: str) -> EvaluationResult:
         """Parse LLM judgment into structured evaluation result."""
         criteria_scores = judgment.get("criteria_scores", {})
 
         # Calculate weighted overall score
         total_weight = sum(c.weight for c in self.criteria)
-        weighted_sum = sum(
-            criteria_scores.get(c.name, 3) * c.weight for c in self.criteria
-        )
+        weighted_sum = sum(criteria_scores.get(c.name, 3) * c.weight for c in self.criteria)
         overall_score = weighted_sum / total_weight
 
         return EvaluationResult(
@@ -207,7 +235,9 @@ Provide your evaluation in the following JSON format:
         )
 
     def evaluate_batch(
-        self, tasks_results: List[Tuple[TaskInput, AlgorithmResult]], ground_truths: Optional[Dict[str, str]] = None
+        self,
+        tasks_results: List[Tuple[TaskInput, AlgorithmResult]],
+        ground_truths: Optional[Dict[str, str]] = None,
     ) -> List[EvaluationResult]:
         """Evaluate a batch of task results.
 
@@ -222,20 +252,21 @@ Provide your evaluation in the following JSON format:
         evaluations = []
 
         for task, result in tasks_results:
-            ground_truth = ground_truths.get(task.task_id)
+            task_id = task.task_id or "unknown"
+            ground_truth = ground_truths.get(task_id)
             evaluation = self.evaluate(task, result, ground_truth)
             evaluations.append(evaluation)
 
         return evaluations
 
-    def generate_report(self, evaluations: List[EvaluationResult]) -> Dict:
+    def generate_report(self, evaluations: List[EvaluationResult]) -> Dict[str, Any]:
         """Generate a summary report from multiple evaluations."""
         if not evaluations:
             return {"error": "No evaluations to report"}
 
         # Calculate aggregate statistics
         avg_overall = sum(e.overall_score for e in evaluations) / len(evaluations)
-        
+
         criteria_avgs = {}
         for criterion in self.criteria:
             scores = [e.criteria_scores.get(criterion.name, 0) for e in evaluations]

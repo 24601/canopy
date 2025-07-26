@@ -12,7 +12,11 @@ from .types import AgentConfig, ModelConfig
 
 
 def create_openrouter_agent_config(
-    agent_id: int, model: str = "deepseek/deepseek-r1", temperature: float = 0.7, max_tokens: int = 8192, **kwargs
+    agent_id: int,
+    model: str = "deepseek/deepseek-r1",
+    temperature: float = 0.7,
+    max_tokens: int = 8192,
+    **kwargs,
 ) -> AgentConfig:
     """Create an agent configuration for OpenRouter models.
 

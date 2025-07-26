@@ -1,7 +1,7 @@
 """
-MassGen Streaming Display System
+Canopy Streaming Display System
 
-Provides real-time multi-region display for MassGen agents with:
+Provides real-time multi-region display for Canopy agents with:
 - Individual agent columns showing streaming conversations
 - System status panel with phase transitions and voting
 - File logging for all conversations and events
@@ -14,7 +14,7 @@ import threading
 import time
 import unicodedata
 from datetime import datetime
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 
 class MultiRegionDisplay:
@@ -36,7 +36,7 @@ class MultiRegionDisplay:
         self.start_time = time.time()
         self._lock = threading.RLock()  # Use reentrant lock to prevent deadlock
 
-        # MassGen-specific state tracking
+        # Canopy-specific state tracking
         self.current_phase = "collaboration"
         self.vote_distribution: Dict[int, int] = {}
         self.consensus_reached = False
@@ -51,11 +51,11 @@ class MultiRegionDisplay:
         self._agent_votes_cast: Dict[int, int] = {}  # Track number of votes cast by each agent
 
         # Simplified, consistent border tracking
-        self._display_cache = None  # Single cache object for all dimensions
+        self._display_cache: Optional[Dict[str, int]] = None  # Single cache object for all dimensions
         self._last_agent_count = 0  # Track when to invalidate cache
 
         # CRITICAL FIX: Debounced display updates to prevent race conditions
-        self._update_timer = None
+        self._update_timer: Optional[threading.Timer] = None
         self._update_delay = 0.1  # 100ms debounce
         self._display_updating = False
         self._pending_update = False
@@ -78,21 +78,20 @@ class MultiRegionDisplay:
         if self.save_logs:
             self._setup_logging()
 
-    def _get_terminal_width(self):
+    def _get_terminal_width(self) -> int:
         """Get terminal width with conservative fallback."""
         try:
             return os.get_terminal_size().columns
         except:
             return 120  # Safe default
 
-    def _calculate_layout(self, num_agents: int):
+    def _calculate_layout(self, num_agents: int) -> Tuple[int, int, int]:
         """
         Calculate all layout dimensions in one place for consistency.
         Returns: (col_width, total_width, terminal_width)
         """
         # Invalidate cache if agent count changed or no cache exists
         if self._display_cache is None or self._last_agent_count != num_agents:
-
             terminal_width = self._get_terminal_width()
 
             # More conservative calculation to prevent overflow
@@ -123,6 +122,7 @@ class MultiRegionDisplay:
             self._last_agent_count = num_agents
 
         cache = self._display_cache
+        assert cache is not None  # We just set it above
         return cache["col_width"], cache["total_width"], cache["terminal_width"]
 
     def _get_display_width(self, text: str) -> int:
@@ -332,11 +332,11 @@ class MultiRegionDisplay:
 
         return line
 
-    def _invalidate_display_cache(self):
+    def _invalidate_display_cache(self) -> None:
         """Reset display cache when terminal is resized."""
         self._display_cache = None
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up resources when display is no longer needed."""
         with self._lock:
             if self._update_timer:
@@ -345,7 +345,7 @@ class MultiRegionDisplay:
             self._pending_update = False
             self._display_updating = False
 
-    def _clear_terminal_atomic(self):
+    def _clear_terminal_atomic(self) -> None:
         """Atomically clear terminal using proper ANSI sequences."""
         try:
             # Use ANSI escape sequences for atomic terminal clearing
@@ -360,7 +360,7 @@ class MultiRegionDisplay:
             except Exception:
                 pass  # Silent fallback if all clearing methods fail
 
-    def _schedule_display_update(self):
+    def _schedule_display_update(self) -> None:
         """Schedule a debounced display update to prevent rapid refreshes."""
         with self._lock:
             if self._update_timer:
@@ -373,7 +373,7 @@ class MultiRegionDisplay:
             self._update_timer = threading.Timer(self._update_delay, self._execute_display_update)
             self._update_timer.start()
 
-    def _execute_display_update(self):
+    def _execute_display_update(self) -> None:
         """Execute the actual display update."""
         with self._lock:
             if not self._pending_update:
@@ -395,7 +395,7 @@ class MultiRegionDisplay:
             with self._lock:
                 self._display_updating = False
 
-    def set_agent_model(self, agent_id: int, model_name: str):
+    def set_agent_model(self, agent_id: int, model_name: str) -> None:
         """Set the model name for a specific agent."""
         with self._lock:
             self.agent_models[agent_id] = model_name
@@ -403,7 +403,7 @@ class MultiRegionDisplay:
             if agent_id not in self.agent_outputs:
                 self.agent_outputs[agent_id] = ""
 
-    def update_agent_status(self, agent_id: int, status: str):
+    def update_agent_status(self, agent_id: int, status: str) -> None:
         """Update agent status (working, voted, failed)."""
         with self._lock:
             old_status = self.agent_statuses.get(agent_id, "unknown")
@@ -414,7 +414,12 @@ class MultiRegionDisplay:
                 self.agent_outputs[agent_id] = ""
 
             # Status emoji mapping for system messages
-            status_change_emoji = {"working": "🔄", "voted": "✅", "failed": "❌", "unknown": "❓"}
+            status_change_emoji = {
+                "working": "🔄",
+                "voted": "✅",
+                "failed": "❌",
+                "unknown": "❓",
+            }
 
             # Log status change with emoji
             old_emoji = status_change_emoji.get(old_status, "❓")
@@ -422,14 +427,14 @@ class MultiRegionDisplay:
             status_msg = f"{old_emoji}→{new_emoji} Agent {agent_id}: {old_status} → {status}"
             self.add_system_message(status_msg)
 
-    def update_phase(self, old_phase: str, new_phase: str):
+    def update_phase(self, old_phase: str, new_phase: str) -> None:
         """Update system phase."""
         with self._lock:
             self.current_phase = new_phase
             phase_msg = f"Phase: {old_phase} → {new_phase}"
             self.add_system_message(phase_msg)
 
-    def update_vote_distribution(self, vote_dist: Dict[int, int]):
+    def update_vote_distribution(self, vote_dist: Dict[int, int]) -> None:
         """Update vote distribution."""
         with self._lock:
             self.vote_distribution = vote_dist.copy()
@@ -444,44 +449,44 @@ class MultiRegionDisplay:
             consensus_msg = f"🎉 CONSENSUS REACHED! Agent {representative_id} selected as representative"
             self.add_system_message(consensus_msg)
 
-    def reset_consensus(self):
+    def reset_consensus(self) -> None:
         """Reset consensus state for new debate round."""
         with self._lock:
             self.consensus_reached = False
             self.representative_agent_id = None
             self.vote_distribution.clear()
 
-    def update_agent_vote_target(self, agent_id: int, target_id: Optional[int]):
+    def update_agent_vote_target(self, agent_id: int, target_id: Optional[int]) -> None:
         """Update which agent this agent voted for."""
         with self._lock:
             self._agent_vote_targets[agent_id] = target_id
 
-    def update_agent_chat_round(self, agent_id: int, round_num: int):
+    def update_agent_chat_round(self, agent_id: int, round_num: int) -> None:
         """Update the chat round for an agent."""
         with self._lock:
             self._agent_chat_rounds[agent_id] = round_num
 
-    def update_agent_update_count(self, agent_id: int, count: int):
+    def update_agent_update_count(self, agent_id: int, count: int) -> None:
         """Update the update count for an agent."""
         with self._lock:
             self._agent_update_counts[agent_id] = count
 
-    def update_agent_votes_cast(self, agent_id: int, votes_cast: int):
+    def update_agent_votes_cast(self, agent_id: int, votes_cast: int) -> None:
         """Update the number of votes cast by an agent."""
         with self._lock:
             self._agent_votes_cast[agent_id] = votes_cast
 
-    def update_debate_rounds(self, rounds: int):
+    def update_debate_rounds(self, rounds: int) -> None:
         """Update the debate rounds count."""
         with self._lock:
             self.debate_rounds = rounds
 
-    def update_algorithm_name(self, algorithm_name: str):
+    def update_algorithm_name(self, algorithm_name: str) -> None:
         """Update the algorithm name."""
         with self._lock:
             self.algorithm_name = algorithm_name
 
-    def _setup_logging(self):
+    def _setup_logging(self) -> None:
         """Set up the logging directory and initialize log files."""
         # Create logs directory if it doesn't exist
         base_logs_dir = "logs"
@@ -498,7 +503,7 @@ class MultiRegionDisplay:
 
         # Initialize system log file
         with open(self.system_log_file, "w", encoding="utf-8") as f:
-            f.write(f"MassGen System Messages Log\n")
+            f.write(f"Canopy System Messages Log\n")
             f.write(f"Session started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write("=" * 80 + "\n\n")
 
@@ -510,7 +515,7 @@ class MultiRegionDisplay:
 
             # Initialize agent log file
             with open(self.agent_log_files[agent_id], "w", encoding="utf-8") as f:
-                f.write(f"MassGen Agent {agent_id} Output Log\n")
+                f.write(f"Canopy Agent {agent_id} Output Log\n")
                 f.write(f"Session started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
                 f.write("=" * 80 + "\n\n")
 
@@ -636,7 +641,12 @@ class MultiRegionDisplay:
 
     def format_agent_notification(self, agent_id: int, notification_type: str, content: str):
         """Format agent notifications for display."""
-        notification_emoji = {"update": "📢", "debate": "🗣️", "presentation": "🎯", "prompt": "💡"}
+        notification_emoji = {
+            "update": "📢",
+            "debate": "🗣️",
+            "presentation": "🎯",
+            "prompt": "💡",
+        }
 
         emoji = notification_emoji.get(notification_type, "📨")
         notification_msg = f"{emoji} Agent {agent_id} received {notification_type} notification"
@@ -683,7 +693,7 @@ class MultiRegionDisplay:
         # Create horizontal border line - use the locked width
         border_line = "─" * total_width
 
-        # Enhanced MassGen system header with fixed width
+        # Enhanced Canopy system header with fixed width
         print("")
 
         # ANSI color codes
@@ -706,7 +716,7 @@ class MultiRegionDisplay:
         print(header_empty)
 
         # Title line with exact centering
-        title_text = "🚀 MassGen - Multi-Agent Scaling System 🚀"
+        title_text = "🚀 Canopy - Multi-Agent, Multi-Algorithmic Scaling System 🚀"
         title_line_content = self._pad_to_width(title_text, total_width - 2, "center")
         title_line = f"{BRIGHT_CYAN}║{BRIGHT_YELLOW}{BOLD}{title_line_content}{RESET}{BRIGHT_CYAN}║{RESET}"
         print(title_line)

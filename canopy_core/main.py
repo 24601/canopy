@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-MassGen (Multi-Agent Scaling System) - Programmatic Interface
+Canopy (Multi-Agent Scaling System) - Programmatic Interface
 
-This module provides programmatic interfaces for running the MassGen system.
+This module provides programmatic interfaces for running the Canopy system.
 For command-line usage, use: python cli.py
 
 Programmatic usage examples:
@@ -63,7 +63,9 @@ def _run_single_agent_simple(question: str, config: MassConfig) -> Dict[str, Any
 
     # Create log manager for single agent mode to ensure result.json is saved
     log_manager = MassLogManager(
-        log_dir=config.logging.log_dir, session_id=config.logging.session_id, non_blocking=config.logging.non_blocking
+        log_dir=config.logging.log_dir,
+        session_id=config.logging.session_id,
+        non_blocking=config.logging.non_blocking,
     )
 
     try:
@@ -195,7 +197,9 @@ def run_mass_with_config(question: str, config: MassConfig) -> Dict[str, Any]:
 
     # Create log manager first to get answers directory
     log_manager = MassLogManager(
-        log_dir=config.logging.log_dir, session_id=config.logging.session_id, non_blocking=config.logging.non_blocking
+        log_dir=config.logging.log_dir,
+        session_id=config.logging.session_id,
+        non_blocking=config.logging.non_blocking,
     )
 
     # Create streaming display with answers directory from log manager
@@ -206,7 +210,7 @@ def run_mass_with_config(question: str, config: MassConfig) -> Dict[str, Any]:
             max_lines=config.streaming_display.max_lines,
             save_logs=config.streaming_display.save_logs,
             stream_callback=config.streaming_display.stream_callback,
-            answers_dir=str(log_manager.answers_dir) if not log_manager.non_blocking else None,
+            answers_dir=(str(log_manager.answers_dir) if not log_manager.non_blocking else None),
         )
 
     # Create orchestrator with full configuration

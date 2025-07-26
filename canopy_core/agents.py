@@ -10,10 +10,10 @@ from typing import Callable, Dict, List, Optional
 
 from dotenv import load_dotenv
 
-load_dotenv()
-
 from .agent import MassAgent
-from .types import ModelConfig, TaskInput
+from .types import ModelConfig, TaskInput  # noqa: TC001
+
+load_dotenv()
 
 
 class OpenAIMassAgent(MassAgent):
@@ -27,7 +27,6 @@ class OpenAIMassAgent(MassAgent):
         stream_callback: Optional[Callable] = None,
         **kwargs,
     ):
-
         # Pass all configuration to parent, including agent_type
         super().__init__(
             agent_id=agent_id,
@@ -49,7 +48,6 @@ class GrokMassAgent(OpenAIMassAgent):
         stream_callback: Optional[Callable] = None,
         **kwargs,
     ):
-
         # Pass all configuration to parent, including agent_type
         super().__init__(
             agent_id=agent_id,
@@ -71,7 +69,6 @@ class GeminiMassAgent(OpenAIMassAgent):
         stream_callback: Optional[Callable] = None,
         **kwargs,
     ):
-
         # Pass all configuration to parent, including agent_type
         super().__init__(
             agent_id=agent_id,
@@ -122,16 +119,6 @@ class GeminiMassAgent(OpenAIMassAgent):
         NOTE:
         Gemini's does not support built-in tools and function call at the same time.
         Therefore, we provide them interchangedly in different rounds.
-        The way the conversation is constructed is also different from OpenAI.
-        You can provide consecutive user messages to represent the function call results.
-
-        Args:
-            task: The task to work on
-            messages: Current conversation history
-            restart_instruction: Optional instruction for restarting work (e.g., updates from other agents)
-
-        Returns:
-            Updated conversation history including agent's work
         """
         curr_round = 0
         (
@@ -148,106 +135,37 @@ class GeminiMassAgent(OpenAIMassAgent):
         # Start the task solving loop
         while curr_round < self.max_rounds and self.state.status == "working":
             try:
-                # If function call is enabled or not, add a notification to the user
-                if working_messages[-1].get("role", "") == "user":
-                    if not function_call_enabled:
-                        working_messages[-1]["content"] += (
-                            "\n\n"
-                            + "Note that the `add_answer` and `vote` tools are not enabled now. Please prioritize using the built-in tools to analyze the task first."
-                        )
-                    else:
-                        working_messages[-1]["content"] += (
-                            "\n\n" + "Note that the `add_answer` and `vote` tools are enabled now."
-                        )
+                # Update messages and process round
+                self._update_message_notifications(working_messages, function_call_enabled)
 
-                # Call LLM with current conversation
-                result = self.process_message(messages=working_messages, tools=available_tools)
+                should_renew, new_tools = self._process_gemini_round(
+                    task,
+                    working_messages,
+                    available_tools,
+                    system_tools,
+                    custom_tools,
+                    built_in_tools,
+                    tool_switch,
+                    function_call_enabled,
+                    working_status,
+                )
 
-                # Before Making the new result into effect, check if there is any update from other agents that are unseen by this agent
-                agents_with_update = self.check_update()
-                has_update = len(agents_with_update) > 0
-                # Case 1: if vote() is called and there are new update: make it invalid and renew the conversation
-                # Case 2: if add_answer() is called and there are new update: make it valid and renew the conversation
-                # Case 3: if no function call is made and there are new update: renew the conversation
-
-                # Add assistant response
-                if result.text:
-                    working_messages.append({"role": "assistant", "content": result.text})
-
-                # Execute function calls if any
-                if result.function_calls:
-                    # Deduplicate function calls by their name
-                    result.function_calls = self.deduplicate_function_calls(result.function_calls)
-                    function_outputs, successful_called = self._execute_function_calls(
-                        result.function_calls, invalid_vote_options=agents_with_update
-                    )
-
-                    renew_conversation = False
-                    for function_call, function_output, successful_called in zip(
-                        result.function_calls, function_outputs, successful_called
-                    ):
-                        # If call `add_answer`, we need to rebuild the conversation history with new answers
-                        if function_call.get("name") == "add_answer" and successful_called:
-                            renew_conversation = True
-                            break
-
-                        # If call `vote`, we need to break the loop
-                        if function_call.get("name") == "vote" and successful_called:
-                            renew_conversation = True
-                            break
-
-                    if not renew_conversation:
-                        # Add all function call results to the current conversation
-                        for function_call, function_output in zip(result.function_calls, function_outputs):
-                            working_messages.extend([function_call, function_output])
-                        # If we have used custom tools, switch to built-in tools in the next round
-                        if tool_switch:
-                            available_tools = built_in_tools
-                            function_call_enabled = False
-                            print(f"🔄 Agent {self.agent_id} (Gemini) switching to built-in tools in the next round")
-                    else:  # Renew the conversation
-                        (
-                            working_status,
-                            working_messages,
-                            available_tools,
-                            system_tools,
-                            custom_tools,
-                            built_in_tools,
-                            tool_switch,
-                            function_call_enabled,
-                        ) = self._get_curr_messages_and_tools(task)
+                if should_renew:
+                    # Renew conversation
+                    (
+                        working_status,
+                        working_messages,
+                        available_tools,
+                        system_tools,
+                        custom_tools,
+                        built_in_tools,
+                        tool_switch,
+                        function_call_enabled,
+                    ) = self._get_curr_messages_and_tools(task)
                 else:
-                    # No function calls - check if we should continue or stop
-                    if self.state.status == "voted":
-                        # Agent has voted, exit the work loop
-                        break
-                    else:
-                        # Check if there is any update from other agents that are unseen by this agent
-                        if has_update and working_status != "initial":
-                            # Renew the conversation within the loop
-                            (
-                                working_status,
-                                working_messages,
-                                available_tools,
-                                system_tools,
-                                custom_tools,
-                                built_in_tools,
-                                tool_switch,
-                                function_call_enabled,
-                            ) = self._get_curr_messages_and_tools(task)
-                        else:  # Continue the current conversation and prompting checkin
-                            working_messages.append(
-                                {
-                                    "role": "user",
-                                    "content": "Finish your work above by making a tool call of `vote` or `add_answer`. Make sure you actually call the tool.",
-                                }
-                            )
-
-                    # Switch to custom tools in the next round
-                    if tool_switch:
-                        available_tools = system_tools + custom_tools
-                        function_call_enabled = True
-                        print(f"🔄 Agent {self.agent_id} (Gemini) switching to custom tools in the next round")
+                    # Update tools if changed
+                    if new_tools[0] is not None:
+                        available_tools, function_call_enabled = new_tools
 
                 curr_round += 1
                 self.state.chat_round += 1
@@ -257,15 +175,114 @@ class GeminiMassAgent(OpenAIMassAgent):
                     break
 
             except Exception as e:
-                print(f"❌ Agent {self.agent_id} error in round {self.state.chat_round}: {e}")
-                if self.orchestrator:
-                    self.orchestrator.mark_agent_failed(self.agent_id, str(e))
-
-                self.state.chat_round += 1
+                self._handle_gemini_error(e, curr_round)
                 curr_round += 1
                 break
 
         return working_messages
+
+    def _update_message_notifications(self, working_messages: List[Dict[str, str]], function_call_enabled: bool):
+        """Update the last user message with tool availability notifications."""
+        if working_messages[-1].get("role", "") == "user":
+            if not function_call_enabled:
+                working_messages[-1]["content"] += (
+                    "\n\n"
+                    + "Note that the `add_answer` and `vote` tools are not enabled now. Please prioritize using the built-in tools to analyze the task first."
+                )
+            else:
+                working_messages[-1]["content"] += (
+                    "\n\n" + "Note that the `add_answer` and `vote` tools are enabled now."
+                )
+
+    def _process_gemini_round(
+        self,
+        task,
+        working_messages,
+        available_tools,
+        system_tools,
+        custom_tools,
+        built_in_tools,
+        tool_switch,
+        function_call_enabled,
+        working_status,
+    ):
+        """Process a single round for Gemini agent. Returns (should_renew, (new_tools, new_enabled))."""
+        # Call LLM with current conversation
+        result = self.process_message(messages=working_messages, tools=available_tools)
+
+        # Check for updates from other agents
+        agents_with_update = self.check_update()
+        has_update = len(agents_with_update) > 0
+
+        # Add assistant response
+        if result.text:
+            working_messages.append({"role": "assistant", "content": result.text})
+
+        # Execute function calls if any
+        if result.function_calls:
+            return self._handle_gemini_function_calls(
+                result, agents_with_update, working_messages, built_in_tools, tool_switch
+            ), (available_tools, function_call_enabled)
+        else:
+            return self._handle_gemini_no_function_calls(
+                has_update, working_messages, working_status, system_tools, custom_tools, tool_switch
+            )
+
+    def _handle_gemini_function_calls(self, result, agents_with_update, working_messages, built_in_tools, tool_switch):
+        """Handle function calls for Gemini agent."""
+        # Deduplicate function calls by their name
+        result.function_calls = self.deduplicate_function_calls(result.function_calls)
+        function_outputs, successful_called = self._execute_function_calls(
+            result.function_calls, invalid_vote_options=agents_with_update
+        )
+
+        # Check if conversation needs renewal
+        for function_call, successful_call in zip(result.function_calls, successful_called):
+            if successful_call and function_call.get("name") in ["add_answer", "vote"]:
+                return True  # Renew conversation
+
+        # Add function call results to conversation
+        for function_call, function_output in zip(result.function_calls, function_outputs):
+            working_messages.extend([function_call, function_output])
+
+        # Switch to built-in tools if needed
+        if tool_switch:
+            print(f"🔄 Agent {self.agent_id} (Gemini) switching to built-in tools in the next round")
+
+        return False  # Continue current conversation
+
+    def _handle_gemini_no_function_calls(
+        self, has_update, working_messages, working_status, system_tools, custom_tools, tool_switch
+    ):
+        """Handle case when no function calls were made for Gemini agent."""
+        if self.state.status == "voted":
+            return False, (None, None)  # Agent has voted, will exit loop
+
+        if has_update and working_status != "initial":
+            return True, (None, None)  # Renew conversation due to updates
+        else:
+            # Prompt for tool call
+            working_messages.append(
+                {
+                    "role": "user",
+                    "content": "Finish your work above by making a tool call of `vote` or `add_answer`. Make sure you actually call the tool.",
+                }
+            )
+
+            # Switch to custom tools in the next round
+            if tool_switch:
+                new_tools = system_tools + custom_tools
+                print(f"🔄 Agent {self.agent_id} (Gemini) switching to custom tools in the next round")
+                return False, (new_tools, True)
+
+            return False, (None, None)
+
+    def _handle_gemini_error(self, error: Exception, curr_round: int):
+        """Handle Gemini agent errors during task processing."""
+        print(f"❌ Agent {self.agent_id} error in round {self.state.chat_round}: {error}")
+        if self.orchestrator:
+            self.orchestrator.mark_agent_failed(self.agent_id, str(error))
+        self.state.chat_round += 1
 
 
 class OpenRouterMassAgent(OpenAIMassAgent):
@@ -298,7 +315,11 @@ class OpenRouterMassAgent(OpenAIMassAgent):
 
 
 def create_agent(
-    agent_type: str, agent_id: int, orchestrator=None, model_config: Optional[ModelConfig] = None, **kwargs
+    agent_type: str,
+    agent_id: int,
+    orchestrator=None,
+    model_config: Optional[ModelConfig] = None,
+    **kwargs,
 ) -> MassAgent:
     """
     Factory function to create agents of different types.
@@ -323,4 +344,9 @@ def create_agent(
     if agent_type not in agent_classes:
         raise ValueError(f"Unknown agent type: {agent_type}. Available types: {list(agent_classes.keys())}")
 
-    return agent_classes[agent_type](agent_id=agent_id, orchestrator=orchestrator, model_config=model_config, **kwargs)
+    return agent_classes[agent_type](
+        agent_id=agent_id,
+        orchestrator=orchestrator,
+        model_config=model_config,
+        **kwargs,
+    )

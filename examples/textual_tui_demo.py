@@ -16,15 +16,15 @@ import asyncio
 import random
 import time
 
-from massgen.tui.app import MassGenApp
-from massgen.types import AgentState, SystemState, VoteDistribution
+from canopy_core.tui.app import CanopyApp
+from canopy_core.types import AgentState, SystemState, VoteDistribution
 
 
 async def demo_streaming_data():
     """Demonstrate streaming data to the TUI."""
 
     # Create and run the TUI app
-    app = MassGenApp()
+    app = CanopyApp()
 
     # Create some demo agents
     agent_configs = [
@@ -65,8 +65,8 @@ async def demo_streaming_data():
                 # Simulate streaming output
                 messages = [
                     f"🤖 Agent {agent_id} starting round {round_num}...",
-                    f"📊 Analyzing problem space...",
-                    f"💡 Generating solution approach...",
+                    "📊 Analyzing problem space...",
+                    "💡 Generating solution approach...",
                     f"⚡ Processing with {agent_configs[agent_id]['model']}...",
                     f"✅ Completed analysis for round {round_num}",
                 ]

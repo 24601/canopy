@@ -1,5 +1,6 @@
 """Pytest configuration and fixtures."""
 
+import logging
 import sys
 from pathlib import Path
 from unittest.mock import Mock
@@ -11,7 +12,6 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # Disable logging during tests unless explicitly needed
-import logging
 
 logging.disable(logging.CRITICAL)
 
@@ -54,7 +54,11 @@ def mock_config():
     from canopy_core.types import AgentConfig, MassConfig, ModelConfig, OrchestratorConfig
 
     model_config = ModelConfig(
-        model="test-model", tools=["test_tool"], max_retries=3, max_rounds=5, inference_timeout=30
+        model="test-model",
+        tools=["test_tool"],
+        max_retries=3,
+        max_rounds=5,
+        inference_timeout=30,
     )
 
     agent_config = AgentConfig(agent_id=1, agent_type="openai", model_config=model_config)

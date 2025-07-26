@@ -90,7 +90,12 @@ def create_config_from_models(
     streaming_display = StreamingDisplayConfig(**(streaming_config or {}))
     logging = LoggingConfig(**(logging_config or {}))
 
-    config = MassConfig(orchestrator=orchestrator, agents=agents, streaming_display=streaming_display, logging=logging)
+    config = MassConfig(
+        orchestrator=orchestrator,
+        agents=agents,
+        streaming_display=streaming_display,
+        logging=logging,
+    )
 
     config.validate()
     return config
@@ -116,7 +121,9 @@ def _dict_to_config(data: Dict[str, Any]) -> MassConfig:
 
             # Create agent configuration
             agent_config = AgentConfig(
-                agent_id=agent_data["agent_id"], agent_type=agent_data["agent_type"], model_config=model_config
+                agent_id=agent_data["agent_id"],
+                agent_type=agent_data["agent_type"],
+                model_config=model_config,
             )
             agents.append(agent_config)
 
@@ -132,7 +139,11 @@ def _dict_to_config(data: Dict[str, Any]) -> MassConfig:
         task = data.get("task")
 
         config = MassConfig(
-            orchestrator=orchestrator, agents=agents, streaming_display=streaming_display, logging=logging, task=task
+            orchestrator=orchestrator,
+            agents=agents,
+            streaming_display=streaming_display,
+            logging=logging,
+            task=task,
         )
 
         config.validate()

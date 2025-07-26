@@ -101,7 +101,7 @@ benchmarks:
     questions:
       - "Explain quantum mechanics simply"
       - "Design a sustainable city"
-    
+
     models: ["gpt-4o", "claude-3-sonnet"]
     algorithms: ["massgen", "treequest"]
     num_runs: 3
@@ -167,11 +167,11 @@ print(f"TreeQuest improvement: {stats['treequest_improvement']:.1%}")
 class MyCustomBenchmark:
     def __init__(self, config):
         self.config = config
-    
+
     def run_evaluation(self, algorithm, models):
         # Implement evaluation logic
         pass
-    
+
     def compute_metrics(self, results):
         # Return standardized metrics
         pass

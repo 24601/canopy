@@ -31,7 +31,7 @@ python cli.py --serve --config examples/production.yaml
 
 ```python
 import uvicorn
-from massgen.api_server import app
+from canopy_core.api_server import app
 
 uvicorn.run(app, host="0.0.0.0", port=8000)
 ```
@@ -55,7 +55,7 @@ Create a chat completion using the MassGen consensus system.
   ],
   "temperature": 0.7,
   "stream": false,
-  
+
   // MassGen-specific extensions
   "agent_models": ["gpt-4", "claude-3-opus", "gemini-pro"],
   "algorithm": "massgen",
@@ -113,7 +113,7 @@ Create a text completion using the MassGen consensus system.
   "max_tokens": 10,
   "temperature": 0.5,
   "echo": false,
-  
+
   // MassGen-specific extensions
   "agent_models": ["gpt-4", "claude-3"],
   "algorithm": "treequest"

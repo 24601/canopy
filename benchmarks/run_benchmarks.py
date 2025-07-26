@@ -23,7 +23,7 @@ from typing import Any, Dict, List
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from massgen import run_mass_agents
+from canopy_core import run_mass_agents
 
 
 class BenchmarkRunner:
@@ -85,7 +85,12 @@ class BenchmarkRunner:
             except Exception as e:
                 execution_time = time.time() - start_time
                 run_results.append(
-                    {"run": run + 1, "success": False, "execution_time": execution_time, "error": str(e)}
+                    {
+                        "run": run + 1,
+                        "success": False,
+                        "execution_time": execution_time,
+                        "error": str(e),
+                    }
                 )
                 print(f"      ❌ Failed: {e}")
 
@@ -105,7 +110,7 @@ class BenchmarkRunner:
                 "num_runs": num_runs,
                 "success_rate": len(successful_runs) / num_runs,
                 "avg_execution_time": statistics.mean(exec_times),
-                "std_execution_time": statistics.stdev(exec_times) if len(exec_times) > 1 else 0,
+                "std_execution_time": (statistics.stdev(exec_times) if len(exec_times) > 1 else 0),
                 "min_execution_time": min(exec_times),
                 "max_execution_time": max(exec_times),
                 "consensus_rate": statistics.mean(consensus_rates),
@@ -150,7 +155,11 @@ class BenchmarkRunner:
         filename = self.output_dir / f"benchmark_{config['name']}_{timestamp}.json"
 
         with open(filename, "w") as f:
-            json.dump({"suite": config, "results": results, "timestamp": timestamp}, f, indent=2)
+            json.dump(
+                {"suite": config, "results": results, "timestamp": timestamp},
+                f,
+                indent=2,
+            )
 
         print(f"\n📊 Results saved to: {filename}")
 
@@ -198,7 +207,7 @@ class BenchmarkRunner:
                     by_agents[n] = []
                 by_agents[n].append(r["avg_execution_time"])
 
-            print(f"  By agent count:")
+            print("  By agent count:")
             for n in sorted(by_agents.keys()):
                 avg = statistics.mean(by_agents[n])
                 print(f"    {n} agents: {avg:.2f}s")
@@ -248,9 +257,23 @@ def main():
     """Main benchmark entry point."""
     parser = argparse.ArgumentParser(description="Run MassGen algorithm benchmarks")
     parser.add_argument("--config", type=str, help="Path to benchmark configuration JSON")
-    parser.add_argument("--output-dir", type=str, default="benchmarks/results", help="Output directory for results")
-    parser.add_argument("--algorithms", nargs="+", choices=["massgen", "treequest"], help="Algorithms to benchmark")
-    parser.add_argument("--quick", action="store_true", help="Run quick benchmark with minimal configuration")
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="benchmarks/results",
+        help="Output directory for results",
+    )
+    parser.add_argument(
+        "--algorithms",
+        nargs="+",
+        choices=["massgen", "treequest"],
+        help="Algorithms to benchmark",
+    )
+    parser.add_argument(
+        "--quick",
+        action="store_true",
+        help="Run quick benchmark with minimal configuration",
+    )
 
     args = parser.parse_args()
 

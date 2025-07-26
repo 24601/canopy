@@ -21,7 +21,7 @@ Canopy exposes its capabilities through a standard A2A agent card:
   "version": "1.0.0",
   "capabilities": [
     "multi-agent-consensus",
-    "tree-based-exploration", 
+    "tree-based-exploration",
     "parallel-processing",
     "model-agnostic",
     "streaming-responses",

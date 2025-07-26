@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-MassGen (Multi-Agent Scaling System) - Command Line Interface
+Canopy (Multi-Agent Scaling System) - Command Line Interface
 
-This provides a clean command-line interface for the MassGen system.
+This provides a clean command-line interface for the Canopy system.
 
 Usage examples:
     # Use YAML configuration file
@@ -21,10 +21,10 @@ import argparse
 import sys
 from pathlib import Path
 
-# Add massgen package to path
-sys.path.insert(0, str(Path(__file__).parent))
-
 from canopy_core import ConfigurationError, create_config_from_models, load_config_from_yaml, run_mass_with_config
+
+# Add path if needed for imports
+sys.path.insert(0, str(Path(__file__).parent))
 
 # Color constants for beautiful terminal output
 BRIGHT_CYAN = "\033[96m"
@@ -48,9 +48,9 @@ def display_vote_distribution(vote_distribution):
 
 
 def run_interactive_mode(config):
-    """Run MassGen in interactive mode, asking for questions repeatedly."""
+    """Run Canopy in interactive mode, asking for questions repeatedly."""
 
-    print("\n🤖 MassGen Interactive Mode")
+    print("\n🤖 Canopy Interactive Mode")
     print("=" * 60)
 
     # Display current configuration
@@ -75,7 +75,7 @@ def run_interactive_mode(config):
     # Show orchestrator settings
     if hasattr(config, "orchestrator"):
         orch = config.orchestrator
-        print(f"⚙️  Orchestrator:")
+        print("⚙️  Orchestrator:")
         print(f"   • Algorithm: {getattr(orch, 'algorithm', 'massgen')}")
         print(f"   • Duration: {getattr(orch, 'max_duration', 'Default')}s")
         print(f"   • Consensus: {getattr(orch, 'consensus_threshold', 'Default')}")
@@ -84,7 +84,7 @@ def run_interactive_mode(config):
     # Show model parameters (from first agent as representative)
     if hasattr(config, "agents") and config.agents and hasattr(config.agents[0], "model_config"):
         model_config = config.agents[0].model_config
-        print(f"🔧 Model Config:")
+        print("🔧 Model Config:")
         temp = getattr(model_config, "temperature", "Default")
         timeout = getattr(model_config, "inference_timeout", "Default")
         max_rounds = getattr(model_config, "max_rounds", "Default")
@@ -121,7 +121,7 @@ def run_interactive_mode(config):
 
                 print("\n🔄 Processing your question...")
 
-                # Run MassGen
+                # Run Canopy
                 result = run_mass_with_config(chat_history, config)
 
                 response = result["answer"]
@@ -181,9 +181,9 @@ def run_interactive_mode(config):
 
 
 def main():
-    """Clean CLI interface for MassGen."""
+    """Clean CLI interface for Canopy."""
     parser = argparse.ArgumentParser(
-        description="MassGen (Multi-Agent Scaling System) - Clean CLI",
+        description="Canopy (Multi-Agent Scaling System) - Clean CLI",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -207,7 +207,9 @@ Examples:
 
     # Task input (now optional for interactive mode)
     parser.add_argument(
-        "question", nargs="?", help="Question to solve (optional - if not provided, enters interactive mode)"
+        "question",
+        nargs="?",
+        help="Question to solve (optional - if not provided, enters interactive mode)",
     )
 
     # Special actions
@@ -233,16 +235,23 @@ Examples:
         help="Orchestration algorithm to use (default: massgen)",
     )
     parser.add_argument(
-        "--profile", type=str, default=None, help="Algorithm profile name (e.g., treequest-sakana, massgen-diverse)"
+        "--profile",
+        type=str,
+        default=None,
+        help="Algorithm profile name (e.g., treequest-sakana, massgen-diverse)",
     )
     parser.add_argument("--no-display", action="store_true", help="Disable streaming display")
     parser.add_argument("--no-logs", action="store_true", help="Disable file logging")
+    parser.add_argument("--tui", action="store_true", help="Use advanced Textual TUI interface")
+    parser.add_argument(
+        "--tui-theme", type=str, default="dark", choices=["dark", "light"], help="TUI theme (default: dark)"
+    )
 
     args = parser.parse_args()
 
     # Handle --list-profiles
     if args.list_profiles:
-        from massgen.algorithms.profiles import describe_profile, list_profiles
+        from canopy_core.algorithms.profiles import describe_profile, list_profiles
 
         profiles = list_profiles()
         print("\n📋 Available Algorithm Profiles:")
@@ -251,29 +260,90 @@ Examples:
             print(f"\n{describe_profile(profile_name)}")
             print("-" * 60)
         return
-    
+
+    # Handle --tui (Advanced TUI mode)
+    if args.tui:
+        import asyncio
+
+        from canopy_core.tui.advanced_app import AdvancedCanopyTUI
+
+        print(f"\n{BRIGHT_CYAN}🚀 Starting Advanced Canopy TUI{RESET}")
+        print(f"{BRIGHT_YELLOW}📡 Theme: {args.tui_theme}{RESET}")
+        print(f"{BRIGHT_GREEN}💡 Press 'q' to quit, 'r' to refresh, 'p' to pause{RESET}")
+        print(f"\n{DIM}Starting TUI in 2 seconds...{RESET}\n")
+
+        import time
+
+        time.sleep(2)
+
+        try:
+            # Load configuration
+            if not args.config and not args.models:
+                print("❌ Error: Either --config or --models is required for TUI mode")
+                sys.exit(1)
+
+            if args.config:
+                config = load_config_from_yaml(args.config)
+            else:
+                config = create_config_from_models(args.models)
+
+            # Apply overrides
+            if args.max_duration is not None:
+                config.orchestrator.max_duration = args.max_duration
+            if args.consensus is not None:
+                config.orchestrator.consensus_threshold = args.consensus
+            if args.max_debates is not None:
+                config.orchestrator.max_debate_rounds = args.max_debates
+            if args.algorithm is not None:
+                config.orchestrator.algorithm = args.algorithm
+            if args.no_display:
+                config.streaming_display.display_enabled = False
+            if args.no_logs:
+                config.streaming_display.save_logs = False
+
+            config.validate()
+
+            # Start TUI
+            app = AdvancedCanopyTUI(theme=args.tui_theme)
+
+            # If question provided, we'll handle it in TUI mode
+            if args.question:
+                # TODO: Integrate question handling into TUI
+                pass
+
+            app.run()
+
+        except KeyboardInterrupt:
+            print(f"\n{BRIGHT_YELLOW}👋 TUI stopped by user{RESET}")
+        except Exception as e:
+            print(f"\n{BRIGHT_RED}❌ TUI error: {e}{RESET}")
+            import traceback
+
+            traceback.print_exc()
+        return
+
     # Handle --serve (API server mode)
     if args.serve:
         import uvicorn
-        from massgen.api_server import app
-        
-        print(f"\n{BRIGHT_CYAN}🚀 Starting MassGen API Server{RESET}")
+
+        from canopy_core.api_server import app
+
+        print(f"\n{BRIGHT_CYAN}🚀 Starting Canopy API Server{RESET}")
         print(f"{BRIGHT_YELLOW}📡 Host: {args.host}:{args.port}{RESET}")
-        print(f"{BRIGHT_GREEN}📚 Docs: http://{args.host if args.host != '0.0.0.0' else 'localhost'}:{args.port}/docs{RESET}")
-        print(f"{BRIGHT_BLUE}🔗 OpenAPI: http://{args.host if args.host != '0.0.0.0' else 'localhost'}:{args.port}/openapi.json{RESET}")
-        print(f"\n{BRIGHT_WHITE}Available endpoints:{RESET}")
-        print(f"  • POST /v1/chat/completions    - OpenAI Chat API compatible")
-        print(f"  • POST /v1/completions         - OpenAI Completions API compatible")
-        print(f"  • GET  /v1/models              - List available models")
-        print(f"  • GET  /health                 - Health check")
-        print(f"\n{DIM}Press CTRL+C to stop the server{RESET}\n")
-        
-        uvicorn.run(
-            app,
-            host=args.host,
-            port=args.port,
-            log_level="info"
+        print(
+            f"{BRIGHT_GREEN}📚 Docs: http://{args.host if args.host != '0.0.0.0' else 'localhost'}:{args.port}/docs{RESET}"
         )
+        print(
+            f"{BRIGHT_BLUE}🔗 OpenAPI: http://{args.host if args.host != '0.0.0.0' else 'localhost'}:{args.port}/openapi.json{RESET}"
+        )
+        print(f"\n{BRIGHT_WHITE}Available endpoints:{RESET}")
+        print("  • POST /v1/chat/completions    - OpenAI Chat API compatible")
+        print("  • POST /v1/completions         - OpenAI Completions API compatible")
+        print("  • GET  /v1/models              - List available models")
+        print("  • GET  /health                 - Health check")
+        print(f"\n{DIM}Press CTRL+C to stop the server{RESET}\n")
+
+        uvicorn.run(app, host=args.host, port=args.port, log_level="info")
         return
 
     # Load configuration
@@ -301,12 +371,12 @@ Examples:
         if args.profile is not None:
             config.orchestrator.algorithm_profile = args.profile
             # If using a profile, we might need to adjust the agents
-            from massgen.algorithms.profiles import get_profile
+            from canopy_core.algorithms.profiles import get_profile
 
             profile = get_profile(args.profile)
             if profile and not args.config:  # Only override agents if not using a config file
                 # Create agent configs from profile
-                from massgen.types import AgentConfig, ModelConfig
+                from canopy_core.types import AgentConfig, ModelConfig
 
                 config.agents = []
                 for i, model_config in enumerate(profile.models, 1):
@@ -353,7 +423,7 @@ Examples:
                 print(f"🎯 Representative Agent: {result['representative_agent_id']}")
                 print(f"✅ Consensus: {result['consensus_reached']}")
                 print(f"⏱️  Duration: {result['session_duration']:.1f}s")
-                print(f"📊 Votes:")
+                print("📊 Votes:")
                 display_vote_distribution(result["summary"]["final_vote_distribution"])
         else:
             # Interactive mode

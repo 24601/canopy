@@ -9,7 +9,7 @@ This document explains how to set up the required secrets for GitHub Actions.
 These secrets are optional but recommended for running integration tests:
 
 - `OPENAI_API_KEY`: Your OpenAI API key
-- `GEMINI_API_KEY`: Your Google Gemini API key  
+- `GEMINI_API_KEY`: Your Google Gemini API key
 - `GROK_API_KEY`: Your Grok/X.AI API key
 
 ### Code Coverage (Optional)

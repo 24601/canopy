@@ -37,14 +37,14 @@ if [ ! -d "benchmarks/ab-mcts-arc2" ]; then
     echo -e "\nRepository: ${BLUE}https://github.com/SakanaAI/ab-mcts-arc2${NC}"
     echo -e "License: Apache 2.0"
     echo -e "Size: ~50MB (includes datasets)"
-    
+
     read -p "$(echo -e ${YELLOW}Download ARC-AGI-2 benchmark repository? [y/N]: ${NC})" -n 1 -r
     echo
-    
+
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo -e "${BLUE}Cloning ARC-AGI-2 benchmark repository...${NC}"
         git clone --depth 1 https://github.com/SakanaAI/ab-mcts-arc2.git benchmarks/ab-mcts-arc2
-        
+
         if [ $? -eq 0 ]; then
             echo -e "${GREEN}✓ ARC-AGI-2 repository cloned successfully${NC}"
         else
@@ -63,9 +63,9 @@ fi
 # Install ARC-AGI-2 dependencies if repository exists
 if [ -d "benchmarks/ab-mcts-arc2" ] && [ "$ARC_SKIPPED" != "true" ]; then
     echo -e "${BLUE}Installing ARC-AGI-2 dependencies...${NC}"
-    
+
     cd benchmarks/ab-mcts-arc2
-    
+
     # Check for uv first, then pip
     if command -v uv >/dev/null 2>&1; then
         echo -e "${BLUE}Using uv for dependency installation...${NC}"
@@ -78,7 +78,7 @@ if [ -d "benchmarks/ab-mcts-arc2" ] && [ "$ARC_SKIPPED" != "true" ]; then
         cd ../..
         exit 1
     fi
-    
+
     cd ../..
     echo -e "${GREEN}✓ ARC-AGI-2 dependencies installed${NC}"
 fi
@@ -96,7 +96,7 @@ benchmarks:
     questions:
       - "What is 2+2?"
       - "What is the capital of France?"
-    
+
     models: ["gpt-4o-mini", "gpt-4o-mini"]
     algorithms: ["massgen", "treequest"]
     num_runs: 1
@@ -114,18 +114,18 @@ benchmarks:
       - "Explain quantum computing in simple terms"
       - "Design a sustainable transportation system"
       - "Compare the pros and cons of renewable energy"
-    
+
     models: ["gpt-4o-mini", "claude-3-haiku", "gemini-flash"]
     algorithms: ["massgen", "treequest"]
     num_runs: 3
     max_duration: 120
-    
+
   - name: "factual_questions"
     questions:
       - "Who invented the transistor?"
       - "When did World War I end?"
       - "What is the largest planet in our solar system?"
-    
+
     models: ["gpt-4o-mini", "gpt-4o-mini"]
     algorithms: ["massgen", "treequest"]
     num_runs: 2
@@ -141,10 +141,10 @@ description: "ARC-AGI-2 pattern recognition benchmarks"
 # TreeQuest configuration (matches Sakana AI paper)
 treequest_models:
   - "gpt-4o-mini"
-  - "gemini-2.5-pro" 
+  - "gemini-2.5-pro"
   - "openrouter/deepseek/deepseek-r1"
 
-# MassGen configuration  
+# MassGen configuration
 massgen_models:
   - "gpt-4o-mini"
   - "gpt-4o-mini"
@@ -172,7 +172,7 @@ try:
 except Exception as e:
     print(f'✗ Basic benchmarking error: {e}')
     sys.exit(1)
-" 
+"
 
 # Test ARC-AGI-2 benchmarks if available
 if [ -d "benchmarks/ab-mcts-arc2" ]; then

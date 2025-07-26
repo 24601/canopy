@@ -1,0 +1,498 @@
+/* EXTREME HIGH CONTRAST Advanced Canopy TUI Styles */
+
+/* Root application styling - MAXIMUM CONTRAST */
+Screen {
+    background: #000000;  /* Pure black */
+    color: #ffffff;       /* Pure white */
+}
+
+/* Main layout containers */
+#main-layout {
+    height: 100vh;
+    width: 100vw;
+    background: #000000;
+    color: #ffffff;
+}
+
+#content-layout {
+    height: 1fr;
+    background: #000000;
+    color: #ffffff;
+}
+
+/* Panel styling - BRIGHT BORDERS */
+.panel {
+    border: solid #00ffff;    /* Bright cyan border */
+    border-title-color: #ffff00;  /* Bright yellow title */
+    background: #202020;     /* Dark gray - visible against black */
+    margin: 1;
+    border-title-align: center;
+    color: #ffffff;
+}
+
+/* System status panel - MAXIMUM VISIBILITY */
+#system-status {
+    height: 15;
+    border-title-align: center;
+    border: solid #00ffff;    /* Bright cyan */
+    border-title-color: #ffff00;  /* Bright yellow */
+    background: #303030;     /* Light gray for contrast */
+    color: #ffffff;
+}
+
+.system-status {
+    height: 100%;
+    padding: 1;
+    background: #303030;
+    color: #ffffff;
+}
+
+.title {
+    text-align: center;
+    text-style: bold;
+    color: #00ffff;          /* Bright cyan */
+    margin-bottom: 1;
+    background: transparent;
+}
+
+.status-table {
+    height: 1fr;
+    border: none;
+    background: #303030;
+    color: #ffffff;
+}
+
+/* Agents container - HIGH CONTRAST */
+#agents-container {
+    width: 3fr;
+    height: 1fr;
+    border-title-align: center;
+    scrollbar-size: 1 1;
+    scrollbar-background: #404040;
+    scrollbar-color: #00ffff;
+    background: #101010;
+    color: #ffffff;
+    border: solid #808080;   /* Light gray border */
+}
+
+#agents-placeholder {
+    text-align: center;
+    color: #f0f0f0;          /* Almost white */
+    margin: 2;
+    text-style: italic;
+    background: transparent;
+}
+
+/* Agent progress widgets - BRIGHT COLORS */
+.agent-progress {
+    height: 15;
+    border: solid #00ffff;   /* Bright cyan */
+    border-title-color: #ffff00;  /* Bright yellow */
+    margin: 1;
+    padding: 1;
+    background: #404040;     /* Medium gray */
+    border-title-align: center;
+    color: #ffffff;
+}
+
+.agent-header {
+    text-style: bold;
+    color: #00ffff;          /* Bright cyan */
+    margin-bottom: 1;
+    background: transparent;
+}
+
+.model-name {
+    color: #ffff00;          /* Bright yellow */
+    text-style: italic;
+    margin-bottom: 1;
+    background: transparent;
+}
+
+.progress-bar {
+    margin-bottom: 1;
+    background: #202020;
+    color: #00ffff;
+}
+
+.agent-output {
+    height: 5;
+    border: solid #ff0080;   /* Bright magenta */
+    background: #303030;
+    scrollbar-size: 0 1;
+    color: #ffffff;
+}
+
+/* Info panel - HIGH VISIBILITY */
+#info-panel {
+    width: 2fr;
+    height: 1fr;
+    background: #101010;
+    color: #ffffff;
+    border: solid #808080;
+}
+
+/* Main log - BRIGHT GREEN BORDER */
+#main-log {
+    height: 3fr;
+    border: solid #00ff00;   /* Bright green */
+    border-title-align: center;
+    border-title-color: #00ff00;
+    background: #202020;
+    margin: 1;
+    scrollbar-size: 0 1;
+    scrollbar-background: #404040;
+    scrollbar-color: #00ff00;
+    color: #ffffff;
+}
+
+.main-log {
+    padding: 1;
+    color: #ffffff;
+}
+
+/* Vote visualization - BRIGHT ORANGE */
+#vote-viz {
+    height: 1fr;
+    border: solid #ff8000;   /* Bright orange */
+    border-title-align: center;
+    border-title-color: #ff8000;
+    background: #202020;
+    margin: 1;
+    color: #ffffff;
+}
+
+.vote-viz {
+    padding: 1;
+    color: #ffffff;
+}
+
+.vote-header {
+    text-style: bold;
+    color: #ff8000;          /* Bright orange */
+    margin-bottom: 1;
+}
+
+.vote-display {
+    height: 1fr;
+    border: none;
+    background: #303030;
+    color: #ffffff;
+}
+
+/* Controls - BRIGHT BORDERS */
+#controls {
+    height: 5;
+    align: center middle;
+    background: #404040;
+    border-top: solid #00ffff;
+    color: #ffffff;
+}
+
+.controls {
+    padding: 1;
+    color: #ffffff;
+}
+
+/* Button styling - MAXIMUM CONTRAST */
+Button {
+    margin: 0 1;
+    height: 3;
+    min-width: 12;
+    color: #ffffff;
+    background: #606060;
+    border: solid #a0a0a0;
+}
+
+Button.-primary {
+    background: #00ffff;     /* Bright cyan */
+    color: #000000;          /* Black text */
+    border: solid #ffffff;
+}
+
+Button.-primary:hover {
+    background: #80ffff;     /* Lighter cyan */
+    color: #000000;
+}
+
+Button.-default {
+    background: #606060;
+    color: #ffffff;
+    border: solid #a0a0a0;
+}
+
+Button.-default:hover {
+    background: #808080;
+    color: #ffffff;
+}
+
+Button.-warning {
+    background: #ff8000;     /* Bright orange */
+    color: #000000;
+    border: solid #ffffff;
+}
+
+Button.-warning:hover {
+    background: #ffa040;
+    color: #000000;
+}
+
+Button.-success {
+    background: #00ff00;     /* Bright green */
+    color: #000000;
+    border: solid #ffffff;
+}
+
+Button.-success:hover {
+    background: #40ff40;
+    color: #000000;
+}
+
+Button:focus {
+    border: solid #ffff00;   /* Bright yellow focus */
+}
+
+/* Progress bar styling - BRIGHT BLUE */
+ProgressBar {
+    height: 1;
+    background: #202020;
+    color: #00ffff;
+}
+
+ProgressBar > .bar--bar {
+    background: #00ffff;     /* Bright cyan */
+}
+
+ProgressBar > .bar--percentage {
+    color: #ffffff;
+    text-style: bold;
+}
+
+/* DataTable enhancements - HIGH CONTRAST */
+DataTable {
+    background: #303030;
+    color: #ffffff;
+    border: solid #a0a0a0;   /* Light gray border */
+}
+
+DataTable > .datatable--header {
+    background: #00ffff;     /* Bright cyan header */
+    color: #000000;          /* Black text */
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: #ffff00;     /* Bright yellow cursor */
+    color: #000000;
+    text-style: bold;
+}
+
+DataTable > .datatable--hover {
+    background: #606060;
+    color: #ffffff;
+}
+
+DataTable > .datatable--even {
+    background: #404040;
+    color: #ffffff;
+}
+
+DataTable > .datatable--odd {
+    background: #303030;
+    color: #ffffff;
+}
+
+/* RichLog enhancements - WHITE TEXT */
+RichLog {
+    background: #202020;
+    color: #ffffff;          /* Pure white text */
+    scrollbar-size: 0 1;
+    scrollbar-background: #404040;
+    scrollbar-color: #00ffff;
+}
+
+/* LoadingIndicator styling */
+LoadingIndicator {
+    color: #00ffff;          /* Bright cyan */
+    background: transparent;
+}
+
+/* Header and Footer - EXTREME CONTRAST */
+Header {
+    background: #00ffff;     /* Bright cyan background */
+    color: #000000;          /* Black text */
+    text-style: bold;
+    border-bottom: solid #ffff00;  /* Yellow border */
+}
+
+Header .header--title {
+    text-style: bold;
+    color: #000000;
+}
+
+Header .header--subtitle {
+    color: #000080;          /* Dark blue on cyan */
+    text-style: italic;
+}
+
+Footer {
+    background: #404040;
+    color: #ffffff;
+    border-top: solid #00ffff;
+}
+
+Footer .footer--key {
+    background: #ffff00;     /* Bright yellow */
+    color: #000000;          /* Black text */
+    text-style: bold;
+}
+
+Footer .footer--description {
+    color: #ffffff;
+    margin: 0 1;
+}
+
+/* Scrollbar improvements - BRIGHT COLORS */
+ScrollableContainer:focus .scrollbar-vertical {
+    background: #00ffff;
+}
+
+ScrollableContainer:focus .scrollbar-horizontal {
+    background: #00ffff;
+}
+
+/* Status indicators - BRIGHT COLORS */
+.status-working {
+    color: #ff8000;          /* Bright orange */
+    text-style: bold;
+}
+
+.status-completed {
+    color: #00ff00;          /* Bright green */
+    text-style: bold;
+}
+
+.status-failed {
+    color: #ff0000;          /* Bright red */
+    text-style: bold;
+}
+
+.status-idle {
+    color: #c0c0c0;          /* Light gray - still visible */
+}
+
+/* High contrast enhancements */
+.high-contrast {
+    border: solid #ffff00;   /* Bright yellow */
+    background: #606060;
+    color: #ffffff;
+}
+
+.high-contrast-text {
+    color: #ffffff;          /* Pure white */
+    text-style: bold;
+    background: transparent;
+}
+
+.progress-percentage {
+    color: #ffff00;          /* Bright yellow */
+    text-style: bold;
+    background: transparent;
+}
+
+/* Animation classes - BRIGHT COLORS */
+.pulse {
+    text-style: bold;
+    color: #ffff00;
+}
+
+.highlight {
+    background: #ff8000;     /* Bright orange */
+    color: #000000;
+}
+
+.success {
+    color: #00ff00;          /* Bright green */
+    text-style: bold;
+}
+
+.error {
+    color: #ff0000;          /* Bright red */
+    text-style: bold;
+}
+
+.warning {
+    color: #ff8000;          /* Bright orange */
+    text-style: bold;
+}
+
+.info {
+    color: #00ffff;          /* Bright cyan */
+}
+
+/* Utility classes */
+.center {
+    text-align: center;
+}
+
+.bold {
+    text-style: bold;
+    color: #ffffff;
+}
+
+.italic {
+    text-style: italic;
+    color: #f0f0f0;
+}
+
+.underline {
+    text-style: underline;
+    color: #ffffff;
+}
+
+.dim {
+    color: #c0c0c0;          /* Still visible light gray */
+}
+
+.bright {
+    color: #ffffff;          /* Pure white */
+    text-style: bold;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Make sure ALL text is visible */
+Static {
+    color: #ffffff;
+    background: transparent;
+}
+
+Label {
+    color: #ffffff;
+    background: transparent;
+}
+
+/* Input fields - HIGH CONTRAST */
+Input {
+    background: #404040;
+    border: solid #a0a0a0;
+    color: #ffffff;
+}
+
+Input:focus {
+    border: solid #00ffff;   /* Bright cyan focus */
+    background: #505050;
+}
+
+/* Text areas */
+TextArea {
+    background: #303030;
+    color: #ffffff;
+    border: solid #a0a0a0;
+}
+
+TextArea:focus {
+    border: solid #00ffff;
+}

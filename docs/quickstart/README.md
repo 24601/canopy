@@ -240,13 +240,13 @@ agents:
       model: gpt-4o
       temperature: 0.7
       max_tokens: 2000
-      
+
   - agent_id: 2
     agent_type: anthropic
     model_config:
       model: claude-3-sonnet
       temperature: 0.5
-      
+
   - agent_id: 3
     agent_type: gemini
     model_config:

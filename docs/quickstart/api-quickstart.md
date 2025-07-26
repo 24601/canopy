@@ -86,15 +86,15 @@ response = client.chat.completions.create(
         # Agent configuration
         "agent_models": ["gpt-4o", "claude-3-sonnet", "gemini-pro"],
         "algorithm": "treequest",  # or "massgen", "creative", "analytical"
-        
+
         # Consensus settings
         "consensus_threshold": 0.8,  # 80% agreement required
         "max_debate_rounds": 5,      # Maximum rounds of discussion
-        
+
         # Performance settings
         "max_duration": 300,         # Timeout in seconds
         "parallel_execution": True,   # Run agents in parallel
-        
+
         # Output settings
         "include_reasoning": True,    # Include agent reasoning
         "include_consensus": True,    # Include consensus details
@@ -171,7 +171,7 @@ http POST localhost:8000/v1/chat/completions \
   model=canopy-multi \
   messages:='[{"role": "user", "content": "Hello!"}]'
 
-# With agent configuration  
+# With agent configuration
 http POST localhost:8000/v1/chat/completions \
   model=canopy-multi \
   messages:='[{"role": "user", "content": "Compare SQL vs NoSQL"}]' \

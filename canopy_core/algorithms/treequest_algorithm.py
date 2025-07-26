@@ -18,7 +18,7 @@ import time
 from typing import Any, Dict
 
 from ..tracing import add_span_attributes, traced
-from ..types import TaskInput
+from ..types import TaskInput  # noqa: TC001
 from .base import AlgorithmResult, BaseAlgorithm
 from .factory import register_algorithm
 
@@ -50,7 +50,14 @@ class TreeQuestAlgorithm(BaseAlgorithm):
         streaming_orchestrator: Any = None,
     ) -> None:
         """Initialize the TreeQuest algorithm."""
-        super().__init__(agents, agent_states, system_state, config, log_manager, streaming_orchestrator)
+        super().__init__(
+            agents,
+            agent_states,
+            system_state,
+            config,
+            log_manager,
+            streaming_orchestrator,
+        )
 
         # Algorithm-specific configuration
         self.max_iterations = config.get("max_iterations", 10)

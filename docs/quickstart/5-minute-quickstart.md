@@ -99,7 +99,7 @@ python -m canopy "Compare Python vs JavaScript for web development" \
 
 ## 💡 Tips for Speed
 
-1. **Use `--models` shorthand**: 
+1. **Use `--models` shorthand**:
    ```bash
    # These are equivalent
    --models gpt-4o claude-3-haiku

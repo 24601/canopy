@@ -189,7 +189,7 @@ class DuckDBSpanExporter(SpanExporter):
                     {
                         "name": event.name,
                         "timestamp": event.timestamp,
-                        "attributes": dict(event.attributes) if event.attributes else {},
+                        "attributes": (dict(event.attributes) if event.attributes else {}),
                     }
                 )
 
@@ -217,13 +217,13 @@ class DuckDBSpanExporter(SpanExporter):
         return {
             "span_id": format(context.span_id, "016x"),
             "trace_id": format(context.trace_id, "032x"),
-            "parent_span_id": format(span.parent.span_id, "016x") if span.parent else None,
+            "parent_span_id": (format(span.parent.span_id, "016x") if span.parent else None),
             "name": span.name,
             "kind": span.kind.value,
             "start_time": span.start_time,
             "end_time": span.end_time or span.start_time,
             "duration_ms": duration_ms,
-            "status_code": span.status.status_code.value if span.status else StatusCode.UNSET.value,
+            "status_code": (span.status.status_code.value if span.status else StatusCode.UNSET.value),
             "status_description": span.status.description if span.status else None,
             "service_name": resource.get("service.name", "unknown"),
             "service_version": resource.get("service.version", "unknown"),
@@ -235,7 +235,7 @@ class DuckDBSpanExporter(SpanExporter):
                 "trace_id": format(context.trace_id, "032x"),
                 "span_id": format(context.span_id, "016x"),
                 "trace_flags": context.trace_flags,
-                "trace_state": str(context.trace_state) if context.trace_state else None,
+                "trace_state": (str(context.trace_state) if context.trace_state else None),
                 "is_remote": context.is_remote,
             },
         }

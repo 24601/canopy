@@ -182,7 +182,7 @@ for question in questions:
             "algorithm": "fast"  # Use fast algorithm for batch
         }
     )
-    
+
     results.append({
         "question": question,
         "answer": response.choices[0].message.content
@@ -204,22 +204,22 @@ client = OpenAI(base_url="http://localhost:8000/v1", api_key="not-needed")
 
 def compare_models(question, model_sets):
     results = {}
-    
+
     for name, models in model_sets.items():
         start = time.time()
-        
+
         response = client.chat.completions.create(
             model="canopy-multi",
             messages=[{"role": "user", "content": question}],
             extra_body={"agent_models": models}
         )
-        
+
         results[name] = {
             "response": response.choices[0].message.content,
             "time": time.time() - start,
             "tokens": response.usage.total_tokens
         }
-    
+
     return results
 
 # Compare different model combinations
@@ -257,16 +257,16 @@ messages = []
 while True:
     try:
         user_input = input("\nYou: ")
-        
+
         if user_input.lower() == 'quit':
             break
         elif user_input.lower() == 'clear':
             messages = []
             print("Conversation cleared!")
             continue
-            
+
         messages.append({"role": "user", "content": user_input})
-        
+
         response = client.chat.completions.create(
             model="canopy-multi",
             messages=messages,
@@ -275,12 +275,12 @@ while True:
                 "algorithm": "balanced"
             }
         )
-        
+
         ai_response = response.choices[0].message.content
         messages.append({"role": "assistant", "content": ai_response})
-        
+
         print(f"\nAI: {ai_response}")
-        
+
     except KeyboardInterrupt:
         print("\n\nGoodbye!")
         break
@@ -299,10 +299,10 @@ client = OpenAI(base_url="http://localhost:8000/v1", api_key="not-needed")
 
 def chat_with_agents(message, model1, model2, model3, algorithm):
     models = [m for m in [model1, model2, model3] if m]
-    
+
     if not models:
         return "Please select at least one model!"
-    
+
     response = client.chat.completions.create(
         model="canopy-multi",
         messages=[{"role": "user", "content": message}],
@@ -311,7 +311,7 @@ def chat_with_agents(message, model1, model2, model3, algorithm):
             "algorithm": algorithm
         }
     )
-    
+
     return response.choices[0].message.content
 
 # Create Gradio interface

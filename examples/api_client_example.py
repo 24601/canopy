@@ -8,9 +8,6 @@ Prerequisites:
 3. Install the OpenAI client: pip install openai
 """
 
-import json
-from typing import Any, Dict, List
-
 from openai import OpenAI
 
 
@@ -37,7 +34,12 @@ def multi_agent_chat_example(client: OpenAI) -> None:
 
     response = client.chat.completions.create(
         model="massgen-multi",
-        messages=[{"role": "user", "content": "What are the ethical implications of artificial general intelligence?"}],
+        messages=[
+            {
+                "role": "user",
+                "content": "What are the ethical implications of artificial general intelligence?",
+            }
+        ],
         extra_body={
             "agent_models": ["gpt-4", "claude-3-opus", "gemini-pro"],
             "consensus_threshold": 0.75,
@@ -114,7 +116,11 @@ def treequest_example(client: OpenAI) -> None:
                 "content": "Solve this step by step: If a train travels at 60 mph for 2.5 hours, how far does it go?",
             }
         ],
-        extra_body={"agent_models": ["gpt-4", "gemini-pro"], "algorithm": "treequest", "consensus_threshold": 0.8},
+        extra_body={
+            "agent_models": ["gpt-4", "gemini-pro"],
+            "algorithm": "treequest",
+            "consensus_threshold": 0.8,
+        },
     )
 
     print(f"Response: {response.choices[0].message.content}")
@@ -207,7 +213,12 @@ def creative_vs_factual_example(client: OpenAI) -> None:
     print("\nCreative Task:")
     creative_response = client.chat.completions.create(
         model="massgen-multi",
-        messages=[{"role": "user", "content": "Write a creative story opening about a time traveler"}],
+        messages=[
+            {
+                "role": "user",
+                "content": "Write a creative story opening about a time traveler",
+            }
+        ],
         temperature=0.9,
         extra_body={
             "agent_models": ["gpt-4", "claude-3-opus"],
@@ -221,7 +232,12 @@ def creative_vs_factual_example(client: OpenAI) -> None:
     print("\nFactual Task:")
     factual_response = client.chat.completions.create(
         model="massgen-multi",
-        messages=[{"role": "user", "content": "What is the exact value of the speed of light in vacuum?"}],
+        messages=[
+            {
+                "role": "user",
+                "content": "What is the exact value of the speed of light in vacuum?",
+            }
+        ],
         temperature=0.1,
         extra_body={
             "agent_models": ["gpt-4", "claude-3", "gemini-pro"],

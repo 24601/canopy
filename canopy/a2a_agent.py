@@ -252,7 +252,12 @@ class CanopyA2AAgent:
             self.consensus_threshold = config.orchestrator.consensus_threshold
             self.max_debate_rounds = config.orchestrator.max_debate_rounds
         else:
-            self.models = models or ["gpt-4.1", "claude-opus-4", "gemini-2.5-pro", "grok-4"]
+            self.models = models or [
+                "gpt-4.1",
+                "claude-opus-4",
+                "gemini-2.5-pro",
+                "grok-4",
+            ]
             self.algorithm = algorithm
             self.consensus_threshold = consensus_threshold
             self.max_debate_rounds = max_debate_rounds
@@ -408,8 +413,6 @@ class CanopyA2AAgent:
             # Handle legacy A2A message format
             if "protocol" in message and message.get("protocol") == "a2a/1.0":
                 # Legacy format - convert to new format
-                import uuid
-
                 # Extract content and parameters
                 content = message.get("content", "")
                 params = message.get("parameters", {})
@@ -502,11 +505,7 @@ class CanopyA2AAgent:
             config.streaming_display.display_enabled = False
 
             # Run Canopy
-            import time
-
-            start_time = time.time()
             result = run_mass_with_config(content, config)
-            execution_time = int((time.time() - start_time) * 1000)
 
             # Return response in expected format
             return {
@@ -541,7 +540,12 @@ class CanopyA2AAgent:
                         "type": "array",
                         "description": "List of AI models to use",
                         "required": False,
-                        "default": ["gpt-4.1", "claude-opus-4", "gemini-2.5-pro", "grok-4"],
+                        "default": [
+                            "gpt-4.1",
+                            "claude-opus-4",
+                            "gemini-2.5-pro",
+                            "grok-4",
+                        ],
                     },
                     "consensus_threshold": {
                         "type": "number",

@@ -25,7 +25,7 @@ from typing import Any, Dict, List, Optional
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from massgen import run_mass_agents
+from canopy_core import run_mass_agents
 
 
 class SakanaBenchmarkRunner:
@@ -297,7 +297,12 @@ class SakanaBenchmarkRunner:
             if algorithm == "treequest":
                 # For TreeQuest, use multi-model setup as in paper
                 models = config.get(
-                    "treequest_models", ["gpt-4o-mini", "gemini-2.5-pro", "openrouter/deepseek/deepseek-r1"]
+                    "treequest_models",
+                    [
+                        "gpt-4o-mini",
+                        "gemini-2.5-pro",
+                        "openrouter/deepseek/deepseek-r1",
+                    ],
                 )
             else:
                 # For MassGen, use same models but in parallel voting
@@ -318,7 +323,11 @@ class SakanaBenchmarkRunner:
         filename = self.output_dir / f"sakana_benchmark_{timestamp}.json"
 
         with open(filename, "w") as f:
-            json.dump({"config": config, "results": results, "timestamp": timestamp}, f, indent=2)
+            json.dump(
+                {"config": config, "results": results, "timestamp": timestamp},
+                f,
+                indent=2,
+            )
 
         print(f"\n📊 Results saved to: {filename}")
 
@@ -360,7 +369,11 @@ def create_default_sakana_config():
         "description": "Reproduce Sakana AI TreeQuest benchmarks on ARC-AGI-2",
         "algorithms": ["massgen", "treequest"],
         "massgen_models": ["gpt-4o-mini", "gpt-4o-mini", "gpt-4o-mini"],
-        "treequest_models": ["gpt-4o-mini", "gemini-2.5-pro", "openrouter/deepseek/deepseek-r1"],
+        "treequest_models": [
+            "gpt-4o-mini",
+            "gemini-2.5-pro",
+            "openrouter/deepseek/deepseek-r1",
+        ],
         "task_ids": None,  # None for all tasks
         "max_llm_calls": 250,
         "num_runs": 3,
@@ -372,10 +385,22 @@ def main():
     parser = argparse.ArgumentParser(description="Run Sakana AI-style benchmarks for algorithm comparison")
     parser.add_argument("--config", type=str, help="Path to benchmark configuration JSON")
     parser.add_argument(
-        "--output-dir", type=str, default="benchmarks/results/sakana", help="Output directory for results"
+        "--output-dir",
+        type=str,
+        default="benchmarks/results/sakana",
+        help="Output directory for results",
     )
-    parser.add_argument("--algorithms", nargs="+", choices=["massgen", "treequest"], help="Algorithms to benchmark")
-    parser.add_argument("--quick", action="store_true", help="Run quick benchmark with minimal configuration")
+    parser.add_argument(
+        "--algorithms",
+        nargs="+",
+        choices=["massgen", "treequest"],
+        help="Algorithms to benchmark",
+    )
+    parser.add_argument(
+        "--quick",
+        action="store_true",
+        help="Run quick benchmark with minimal configuration",
+    )
     parser.add_argument("--task-ids", nargs="+", type=int, help="Specific ARC task IDs to run")
 
     args = parser.parse_args()

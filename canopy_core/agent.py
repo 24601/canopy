@@ -1,20 +1,18 @@
 import json
 import time
+from abc import ABC
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeoutError
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from dotenv import load_dotenv
-
-load_dotenv()
-
-from abc import ABC
-from typing import Any, Callable, Dict, List, Optional
 
 from .backends import gemini, grok, oai
 from .tracing import add_span_attributes, traced
 from .types import AgentResponse, AgentState, ModelConfig, TaskInput
 from .utils import function_to_json, get_agent_type_from_model
+
+load_dotenv()
 
 # TASK_INSTRUCTION = """
 # Please use your expertise and tools (if available) to fully verify if the best CURRENT ANSWER addresses the ORIGINAL MESSAGE.
@@ -209,7 +207,7 @@ class MassAgent(ABC):
         """
         # Use the orchestrator to update the answer and notify other agents to restart
         self.orchestrator.notify_answer_update(self.agent_id, new_answer)
-        return f"The new answer has been added."
+        return "The new answer has been added."
 
     def vote(self, agent_id: int, reason: str = "", invalid_vote_options: List[int] = []):
         """
@@ -278,7 +276,11 @@ class MassAgent(ABC):
                 if func_name == "add_answer":
                     result = self.add_answer(func_args.get("new_answer", ""))
                 elif func_name == "vote":
-                    result = self.vote(func_args.get("agent_id"), func_args.get("reason", ""), invalid_vote_options)
+                    result = self.vote(
+                        func_args.get("agent_id"),
+                        func_args.get("reason", ""),
+                        invalid_vote_options,
+                    )
                 elif func_name in register_tool:
                     result = register_tool[func_name](**func_args)
                 else:
@@ -289,7 +291,11 @@ class MassAgent(ABC):
                     }
 
                 # Add function call and result to messages
-                function_output = {"type": "function_call_output", "call_id": func_call_id, "output": str(result)}
+                function_output = {
+                    "type": "function_call_output",
+                    "call_id": func_call_id,
+                    "output": str(result),
+                }
                 function_outputs.append(function_output)
                 successful_called.append(True)
 
@@ -438,7 +444,9 @@ class MassAgent(ABC):
             all_agent_votes_str = "\n\n".join(all_agent_votes)
             status = "debate"
             task_input = AGENT_ANSWER_AND_VOTE_MESSAGE.format(
-                task=task.question, agent_answers=all_agent_answers_str, agent_votes=all_agent_votes_str
+                task=task.question,
+                agent_answers=all_agent_answers_str,
+                agent_votes=all_agent_votes_str,
             )
         else:
             # Case 3: All agents are working and not in debating
@@ -449,7 +457,10 @@ class MassAgent(ABC):
 
     def _get_task_input_messages(self, user_input: str) -> List[Dict[str, str]]:
         """Get the task input messages for the agent."""
-        return [{"role": "system", "content": SYSTEM_INSTRUCTION}, {"role": "user", "content": user_input}]
+        return [
+            {"role": "system", "content": SYSTEM_INSTRUCTION},
+            {"role": "user", "content": user_input},
+        ]
 
     def _get_curr_messages_and_tools(self, task: TaskInput):
         """Get the current messages and tools for the agent."""
@@ -469,14 +480,9 @@ class MassAgent(ABC):
 
         Args:
             task: The task to work on
-            messages: Current conversation history
-            restart_instruction: Optional instruction for restarting work (e.g., updates from other agents)
 
         Returns:
             Updated conversation history including agent's work
-
-        This method should be implemented by concrete agent classes.
-        The agent continues the conversation until it votes or reaches max rounds.
         """
         add_span_attributes(
             {
@@ -494,67 +500,9 @@ class MassAgent(ABC):
         # Start the task solving loop
         while curr_round < self.max_rounds and self.state.status == "working":
             try:
-                # Call LLM with current conversation
-                result = self.process_message(messages=working_messages, tools=all_tools)
-
-                # Before Making the new result into effect, check if there is any update from other agents that are unseen by this agent
-                agents_with_update = self.check_update()
-                has_update = len(agents_with_update) > 0
-                # Case 1: if vote() is called and there are new update: make it invalid and renew the conversation
-                # Case 2: if add_answer() is called and there are new update: make it valid and renew the conversation
-                # Case 3: if no function call is made and there are new update: renew the conversation
-
-                # Add assistant response
-                if result.text:
-                    working_messages.append({"role": "assistant", "content": result.text})
-
-                # Execute function calls if any
-                if result.function_calls:
-                    # Deduplicate function calls by their name
-                    result.function_calls = self.deduplicate_function_calls(result.function_calls)
-                    # Not voting if there is any update
-                    function_outputs, successful_called = self._execute_function_calls(
-                        result.function_calls, invalid_vote_options=agents_with_update
-                    )
-
-                    renew_conversation = False
-                    for function_call, function_output, successful_called in zip(
-                        result.function_calls, function_outputs, successful_called
-                    ):
-                        # If call `add_answer`, we need to rebuild the conversation history with new answers
-                        if function_call.get("name") == "add_answer" and successful_called:
-                            renew_conversation = True
-                            break
-
-                        # If call `vote`, we need to break the loop
-                        if function_call.get("name") == "vote" and successful_called:
-                            renew_conversation = True
-                            break
-
-                    if (
-                        not renew_conversation
-                    ):  # Add all function call results to the current conversation and continue the loop
-                        for function_call, function_output in zip(result.function_calls, function_outputs):
-                            working_messages.extend([function_call, function_output])
-                    else:  # Renew the conversation
-                        working_status, working_messages, all_tools = self._get_curr_messages_and_tools(task)
-                else:
-                    # No function calls - check if we should continue or stop
-                    if self.state.status == "voted":
-                        # Agent has voted, exit the work loop
-                        break
-                    else:
-                        # Check if there is any update from other agents that are unseen by this agent
-                        if has_update and working_status != "initial":
-                            # The vote option has changed, thus we need to renew the conversation within the loop
-                            working_status, working_messages, all_tools = self._get_curr_messages_and_tools(task)
-                        else:  # Continue the current conversation and prompting checkin
-                            working_messages.append(
-                                {
-                                    "role": "user",
-                                    "content": "Finish your work above by making a tool call of `vote` or `add_answer`. Make sure you actually call the tool.",
-                                }
-                            )
+                if self._process_single_round(task, working_messages, all_tools, working_status):
+                    # Renew conversation
+                    working_status, working_messages, all_tools = self._get_curr_messages_and_tools(task)
 
                 curr_round += 1
                 self.state.chat_round += 1
@@ -564,12 +512,76 @@ class MassAgent(ABC):
                     break
 
             except Exception as e:
-                print(f"❌ Agent {self.agent_id} error in round {self.state.chat_round}: {e}")
-                if self.orchestrator:
-                    self.orchestrator.mark_agent_failed(self.agent_id, str(e))
-
-                self.state.chat_round += 1
+                self._handle_agent_error(e, curr_round)
                 curr_round += 1
                 break
 
         return working_messages
+
+    def _process_single_round(
+        self, task: TaskInput, working_messages: List[Dict[str, str]], all_tools: List, working_status: str = None
+    ) -> bool:
+        """Process a single round of task work. Returns True if conversation should be renewed."""
+        # Call LLM with current conversation
+        result = self.process_message(messages=working_messages, tools=all_tools)
+
+        # Check for updates from other agents
+        agents_with_update = self.check_update()
+        has_update = len(agents_with_update) > 0
+
+        # Add assistant response
+        if result.text:
+            working_messages.append({"role": "assistant", "content": result.text})
+
+        # Execute function calls if any
+        if result.function_calls:
+            return self._handle_function_calls(result, agents_with_update, working_messages)
+        else:
+            return self._handle_no_function_calls(has_update, working_messages, working_status)
+
+    def _handle_function_calls(self, result, agents_with_update: List, working_messages: List[Dict[str, str]]) -> bool:
+        """Handle function calls and return whether conversation should be renewed."""
+        # Deduplicate function calls by their name
+        result.function_calls = self.deduplicate_function_calls(result.function_calls)
+
+        # Execute function calls
+        function_outputs, successful_called = self._execute_function_calls(
+            result.function_calls, invalid_vote_options=agents_with_update
+        )
+
+        # Check if conversation needs renewal
+        for function_call, successful_call in zip(result.function_calls, successful_called):
+            if successful_call and function_call.get("name") in ["add_answer", "vote"]:
+                return True  # Renew conversation
+
+        # Add function call results to conversation
+        for function_call, function_output in zip(result.function_calls, function_outputs):
+            working_messages.extend([function_call, function_output])
+
+        return False  # Continue current conversation
+
+    def _handle_no_function_calls(
+        self, has_update: bool, working_messages: List[Dict[str, str]], working_status: str = None
+    ) -> bool:
+        """Handle case when no function calls were made."""
+        if self.state.status == "voted":
+            return False  # Agent has voted, will exit loop
+
+        if has_update and working_status != "initial":
+            return True  # Renew conversation due to updates
+        else:
+            # Prompt for tool call
+            working_messages.append(
+                {
+                    "role": "user",
+                    "content": "Finish your work above by making a tool call of `vote` or `add_answer`. Make sure you actually call the tool.",
+                }
+            )
+            return False
+
+    def _handle_agent_error(self, error: Exception, curr_round: int):
+        """Handle agent errors during task processing."""
+        print(f"❌ Agent {self.agent_id} error in round {self.state.chat_round}: {error}")
+        if self.orchestrator:
+            self.orchestrator.mark_agent_failed(self.agent_id, str(error))
+        self.state.chat_round += 1

@@ -1,0 +1,14 @@
+{
+  "testModules": [
+    {
+      "moduleId": "tests/tui/test_complete_example.py",
+      "tests": [
+        {
+          "name": "test_complete_multimodal_workflow",
+          "fullName": "tests/tui/test_complete_example.py::test_complete_multimodal_workflow",
+          "state": "skipped"
+        }
+      ]
+    }
+  ]
+}

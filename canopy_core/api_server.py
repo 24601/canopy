@@ -23,7 +23,7 @@ from .types import AgentConfig, MassConfig, ModelConfig
 
 # Import Canopy A2A components
 try:
-    from canopy.a2a_agent import CanopyA2AAgent, create_a2a_handlers
+    from canopy.a2a_agent import create_a2a_handlers
 
     A2A_AVAILABLE = True
 except ImportError:
@@ -144,7 +144,8 @@ class ErrorResponse(BaseModel):
 
 
 def create_massgen_config(
-    request: Union[ChatCompletionRequest, CompletionRequest], default_config_path: Optional[str] = None
+    request: Union[ChatCompletionRequest, CompletionRequest],
+    default_config_path: Optional[str] = None,
 ) -> MassConfig:
     """Create MassGen configuration from request parameters."""
 
@@ -174,7 +175,7 @@ def create_massgen_config(
                     model=model,
                     temperature=request.temperature,
                     top_p=request.top_p,
-                    max_tokens=request.max_tokens if hasattr(request, "max_tokens") else None,
+                    max_tokens=(request.max_tokens if hasattr(request, "max_tokens") else None),
                 ),
             )
 
@@ -202,7 +203,7 @@ def create_massgen_config(
                 model=request.model,
                 temperature=request.temperature,
                 top_p=request.top_p,
-                max_tokens=request.max_tokens if hasattr(request, "max_tokens") else None,
+                max_tokens=(request.max_tokens if hasattr(request, "max_tokens") else None),
             ),
         )
         config.agents = [agent_config]
@@ -274,7 +275,9 @@ async def list_models() -> Dict[str, Any]:
 
 
 @app.post("/v1/chat/completions", response_model=Union[ChatCompletionResponse, ErrorResponse])
-async def create_chat_completion(request: ChatCompletionRequest) -> Union[ChatCompletionResponse, ErrorResponse]:
+async def create_chat_completion(
+    request: ChatCompletionRequest,
+) -> Union[ChatCompletionResponse, ErrorResponse]:
     """Create a chat completion using MassGen."""
     try:
         # Extract question from messages
@@ -285,7 +288,10 @@ async def create_chat_completion(request: ChatCompletionRequest) -> Union[ChatCo
 
         # Handle streaming
         if request.stream:
-            return StreamingResponse(stream_chat_completion(request, question, config), media_type="text/event-stream")
+            return StreamingResponse(
+                stream_chat_completion(request, question, config),
+                media_type="text/event-stream",
+            )
 
         # Run MassGen
         start_time = time.time()
@@ -305,7 +311,13 @@ async def create_chat_completion(request: ChatCompletionRequest) -> Union[ChatCo
             id=response_id,
             created=int(time.time()),
             model=request.model,
-            choices=[ChatChoice(index=0, message=ChatMessage(role="assistant", content=answer), finish_reason="stop")],
+            choices=[
+                ChatChoice(
+                    index=0,
+                    message=ChatMessage(role="assistant", content=answer),
+                    finish_reason="stop",
+                )
+            ],
             usage={
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,
@@ -329,7 +341,9 @@ async def create_chat_completion(request: ChatCompletionRequest) -> Union[ChatCo
 
 
 @app.post("/v1/completions", response_model=Union[CompletionResponse, ErrorResponse])
-async def create_completion(request: CompletionRequest) -> Union[CompletionResponse, ErrorResponse]:
+async def create_completion(
+    request: CompletionRequest,
+) -> Union[CompletionResponse, ErrorResponse]:
     """Create a text completion using MassGen."""
     try:
         # Handle prompt list
@@ -343,7 +357,10 @@ async def create_completion(request: CompletionRequest) -> Union[CompletionRespo
 
         # Handle streaming
         if request.stream:
-            return StreamingResponse(stream_completion(request, prompt, config), media_type="text/event-stream")
+            return StreamingResponse(
+                stream_completion(request, prompt, config),
+                media_type="text/event-stream",
+            )
 
         # Run MassGen
         start_time = time.time()
@@ -531,7 +548,11 @@ async def root() -> Dict[str, Any]:
     }
 
     if A2A_AVAILABLE:
-        endpoints["endpoints"]["a2a"] = {"agent_card": "/agent", "capabilities": "/capabilities", "message": "/message"}
+        endpoints["endpoints"]["a2a"] = {
+            "agent_card": "/agent",
+            "capabilities": "/capabilities",
+            "message": "/message",
+        }
 
     return endpoints
 

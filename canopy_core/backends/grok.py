@@ -21,7 +21,6 @@ def parse_completion(response, add_citations=True):
     code = []
     citations = []
     function_calls = []
-    reasoning_items = []
 
     if hasattr(response, "citations") and response.citations:
         for citation in response.citations:
@@ -164,7 +163,9 @@ def process_message(
                     func_def = custom_tool
 
                 xai_tool = xai_tool_func(
-                    name=func_def["name"], description=func_def["description"], parameters=func_def["parameters"]
+                    name=func_def["name"],
+                    description=func_def["description"],
+                    parameters=func_def["parameters"],
                 )
                 api_tools.append(xai_tool)
             else:
@@ -363,7 +364,7 @@ def process_message(
                         stream_callback(f"🔧 Calling function: {function_call['name']}\n")
                         stream_callback(f"🔧 Arguments: {json.dumps(function_call['arguments'], indent=4)}\n\n")
 
-        except Exception as e:
+        except Exception:
             # Fall back to non-streaming
             completion = make_grok_request(stream=False)
             result = parse_completion(completion, add_citations=True)

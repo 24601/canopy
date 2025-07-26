@@ -1,152 +1,17 @@
 {
   "testModules": [
     {
-      "moduleId": "tests/test_a2a_agent.py",
+      "moduleId": "tests/test_mcp_server.py",
       "tests": [
         {
-          "name": "test_agent_card_default_values",
-          "fullName": "tests/test_a2a_agent.py::TestAgentCard::test_agent_card_default_values",
-          "state": "passed"
-        },
-        {
-          "name": "test_agent_card_serialization",
-          "fullName": "tests/test_a2a_agent.py::TestAgentCard::test_agent_card_serialization",
-          "state": "passed"
-        },
-        {
-          "name": "test_agent_card_custom_values",
-          "fullName": "tests/test_a2a_agent.py::TestAgentCard::test_agent_card_custom_values",
-          "state": "passed"
-        },
-        {
-          "name": "test_get_capabilities_basic",
-          "fullName": "tests/test_a2a_agent.py::TestCapabilities::test_get_capabilities_basic",
-          "state": "passed"
-        },
-        {
-          "name": "test_capability_serialization",
-          "fullName": "tests/test_a2a_agent.py::TestCapabilities::test_capability_serialization",
-          "state": "passed"
-        },
-        {
-          "name": "test_capability_parameters",
-          "fullName": "tests/test_a2a_agent.py::TestCapabilities::test_capability_parameters",
-          "state": "passed"
-        },
-        {
-          "name": "test_handle_query_message",
-          "fullName": "tests/test_a2a_agent.py::TestMessageHandling::test_handle_query_message",
-          "state": "passed"
-        },
-        {
-          "name": "test_handle_capabilities_message",
-          "fullName": "tests/test_a2a_agent.py::TestMessageHandling::test_handle_capabilities_message",
-          "state": "passed"
-        },
-        {
-          "name": "test_handle_info_message",
-          "fullName": "tests/test_a2a_agent.py::TestMessageHandling::test_handle_info_message",
-          "state": "passed"
-        },
-        {
-          "name": "test_handle_unknown_message_type",
-          "fullName": "tests/test_a2a_agent.py::TestMessageHandling::test_handle_unknown_message_type",
-          "state": "passed"
-        },
-        {
-          "name": "test_handle_query_with_metadata",
-          "fullName": "tests/test_a2a_agent.py::TestMessageHandling::test_handle_query_with_metadata",
-          "state": "passed"
-        },
-        {
-          "name": "test_handle_query_error",
-          "fullName": "tests/test_a2a_agent.py::TestMessageHandling::test_handle_query_error",
-          "state": "passed"
-        },
-        {
-          "name": "test_response_creation",
-          "fullName": "tests/test_a2a_agent.py::TestResponseGeneration::test_response_creation",
-          "state": "passed"
-        },
-        {
-          "name": "test_error_response_creation",
-          "fullName": "tests/test_a2a_agent.py::TestResponseGeneration::test_error_response_creation",
-          "state": "passed"
-        },
-        {
-          "name": "test_response_with_complex_metadata",
-          "fullName": "tests/test_a2a_agent.py::TestResponseGeneration::test_response_with_complex_metadata",
-          "state": "passed"
-        },
-        {
-          "name": "test_message_validation",
-          "fullName": "tests/test_a2a_agent.py::TestProtocolCompliance::test_message_validation",
-          "state": "passed"
-        },
-        {
-          "name": "test_timestamp_format",
-          "fullName": "tests/test_a2a_agent.py::TestProtocolCompliance::test_timestamp_format",
-          "state": "passed"
-        },
-        {
-          "name": "test_message_id_format",
-          "fullName": "tests/test_a2a_agent.py::TestProtocolCompliance::test_message_id_format",
-          "state": "passed"
-        },
-        {
-          "name": "test_create_a2a_handlers_default",
-          "fullName": "tests/test_a2a_agent.py::TestHandlerFactory::test_create_a2a_handlers_default",
-          "state": "passed"
-        },
-        {
-          "name": "test_create_a2a_handlers_custom_config",
-          "fullName": "tests/test_a2a_agent.py::TestHandlerFactory::test_create_a2a_handlers_custom_config",
-          "state": "passed"
-        },
-        {
-          "name": "test_message_handler_dict_input",
-          "fullName": "tests/test_a2a_agent.py::TestHandlerFactory::test_message_handler_dict_input",
-          "state": "passed"
-        },
-        {
-          "name": "test_full_query_flow",
-          "fullName": "tests/test_a2a_agent.py::TestIntegration::test_full_query_flow",
-          "state": "passed"
-        },
-        {
-          "name": "test_capability_negotiation_flow",
-          "fullName": "tests/test_a2a_agent.py::TestIntegration::test_capability_negotiation_flow",
-          "state": "passed"
-        },
-        {
-          "name": "test_error_recovery",
-          "fullName": "tests/test_a2a_agent.py::TestIntegration::test_error_recovery",
-          "state": "passed"
-        },
-        {
-          "name": "test_empty_content_query",
-          "fullName": "tests/test_a2a_agent.py::TestEdgeCases::test_empty_content_query",
-          "state": "passed"
-        },
-        {
-          "name": "test_very_long_content",
-          "fullName": "tests/test_a2a_agent.py::TestEdgeCases::test_very_long_content",
-          "state": "passed"
-        },
-        {
-          "name": "test_invalid_metadata_values",
-          "fullName": "tests/test_a2a_agent.py::TestEdgeCases::test_invalid_metadata_values",
-          "state": "passed"
-        },
-        {
-          "name": "test_agent_card_missing_fields",
-          "fullName": "tests/test_a2a_agent.py::TestEdgeCases::test_agent_card_missing_fields",
-          "state": "passed"
-        },
-        {
-          "name": "test_concurrent_message_handling",
-          "fullName": "tests/test_a2a_agent.py::TestEdgeCases::test_concurrent_message_handling",
-          "state": "passed"
+          "name": "collection_error_tests/test_mcp_server.py",
+          "fullName": "tests/test_mcp_server.py",
+          "state": "failed",
+          "errors": [
+            {
+              "message": "ImportError while importing test module '/Users/basitmustafa/Documents/GitHub/canopy/tests/test_mcp_server.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n../../../.local/share/mise/installs/python/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\ntests/test_mcp_server.py:22: in <module>\n    from canopy.mcp_server import (\ncanopy/__init__.py:10: in <module>\n    from canopy_core import (\ncanopy_core/__init__.py:56: in <module>\n    from .main import MassSystem, run_mass_agents, run_mass_with_config\ncanopy_core/main.py:38: in <module>\n    from .orchestrator import MassOrchestrator\ncanopy_core/orchestrator.py:10: in <module>\n    from .algorithms import AlgorithmFactory\ncanopy_core/algorithms/__init__.py:13: in <module>\n    from .massgen_algorithm import MassGenAlgorithm\nE   ModuleNotFoundError: No module named 'canopy_core.algorithms.massgen_algorithm'"
+            }
+          ]
         }
       ]
     }

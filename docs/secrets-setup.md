@@ -105,13 +105,13 @@ agents:
     model_config:
       model: "openai/gpt-4-turbo"
       api_key: ${OPENROUTER_API_KEY}
-      
+
   - name: "Claude Agent"
     backend: "openrouter"
     model_config:
       model: "anthropic/claude-3-opus"
       api_key: ${OPENROUTER_API_KEY}
-      
+
   - name: "Gemini Agent"
     backend: "openrouter"
     model_config:
@@ -183,20 +183,20 @@ Here's a complete example of setting up MassGen with OpenRouter:
    ```yaml
    algorithm: "massgen"
    max_concurrent_agents: 3
-   
+
    agents:
      - name: "Fast Thinker"
        backend: "openrouter"
        model_config:
          model: "openai/gpt-3.5-turbo"
          temperature: 0.7
-         
+
      - name: "Deep Thinker"
        backend: "openrouter"
        model_config:
          model: "anthropic/claude-3-opus"
          temperature: 0.5
-         
+
      - name: "Creative Thinker"
        backend: "openrouter"
        model_config:

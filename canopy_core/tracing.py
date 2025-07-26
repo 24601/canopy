@@ -57,12 +57,13 @@ def setup_tracing() -> Optional[TracerProvider]:
         print(f"📊 Tracing to DuckDB: {exporter.db_path}")
     elif MASSGEN_TRACE_BACKEND == "otlp":
         exporter = OTLPSpanExporter(
-            endpoint=MASSGEN_OTLP_ENDPOINT, insecure=True  # For development; use secure in production
+            endpoint=MASSGEN_OTLP_ENDPOINT,
+            insecure=True,  # For development; use secure in production
         )
     elif MASSGEN_TRACE_BACKEND == "jaeger":
         exporter = JaegerExporter(
             agent_host_name=MASSGEN_JAEGER_ENDPOINT.split(":")[0],
-            agent_port=int(MASSGEN_JAEGER_ENDPOINT.split(":")[1]) if ":" in MASSGEN_JAEGER_ENDPOINT else 6831,
+            agent_port=(int(MASSGEN_JAEGER_ENDPOINT.split(":")[1]) if ":" in MASSGEN_JAEGER_ENDPOINT else 6831),
         )
     else:
         # Console exporter for debugging
@@ -97,7 +98,9 @@ def generate_correlation_id() -> str:
 
 @contextmanager
 def trace_context(
-    correlation_id: Optional[str] = None, orchestration_id: Optional[str] = None, algorithm: Optional[str] = None
+    correlation_id: Optional[str] = None,
+    orchestration_id: Optional[str] = None,
+    algorithm: Optional[str] = None,
 ):
     """Context manager to propagate trace context."""
     tokens = []

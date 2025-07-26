@@ -1,3 +1,6 @@
+# Algorithm extensions for MassGen
+# Based on the original MassGen framework: https://github.com/Leezekun/MassGen
+
 # Algorithm extensions for Canopy
 # Based on the original MassGen framework: https://github.com/Leezekun/MassGen
 """
@@ -117,9 +120,7 @@ class CanopyAlgorithm(BaseAlgorithm):
             raise ValueError(f"Target agent {target_id} not registered")
 
         # Create vote record
-        vote = VoteRecord(
-            voter_id=voter_id, target_id=target_id, reason=reason, timestamp=time.time()
-        )
+        vote = VoteRecord(voter_id=voter_id, target_id=target_id, reason=reason, timestamp=time.time())
 
         # Record the vote
         self.votes.append(vote)
@@ -161,9 +162,7 @@ class CanopyAlgorithm(BaseAlgorithm):
             answer_msg = f"📝 Agent {agent_id} updated answer ({len(answer)} chars)"
             self.streaming_orchestrator.add_system_message(answer_msg)
             update_count = len(self.agent_states[agent_id].updated_answers)
-            self.streaming_orchestrator.update_agent_update_count(
-                agent_id, update_count
-            )
+            self.streaming_orchestrator.update_agent_update_count(agent_id, update_count)
 
         # Restart voted agents when any agent shares new updates
         restarted_agents = []
@@ -175,21 +174,13 @@ class CanopyAlgorithm(BaseAlgorithm):
                 state.execution_start_time = time.time()
                 restarted_agents.append(other_agent_id)
 
-                logger.info(
-                    f"🔄 Agent {other_agent_id} restarted due to update from Agent {agent_id}"
-                )
+                logger.info(f"🔄 Agent {other_agent_id} restarted due to update from Agent {agent_id}")
 
                 # Update streaming display
                 if self.streaming_orchestrator:
-                    self.streaming_orchestrator.update_agent_status(
-                        other_agent_id, "working"
-                    )
-                    self.streaming_orchestrator.update_agent_vote_target(
-                        other_agent_id, None
-                    )
-                    restart_msg = (
-                        f"🔄 Agent {other_agent_id} restarted due to new update"
-                    )
+                    self.streaming_orchestrator.update_agent_status(other_agent_id, "working")
+                    self.streaming_orchestrator.update_agent_vote_target(other_agent_id, None)
+                    restart_msg = f"🔄 Agent {other_agent_id} restarted due to new update"
                     self.streaming_orchestrator.add_system_message(restart_msg)
 
                 # Log agent restart
@@ -242,9 +233,7 @@ class CanopyAlgorithm(BaseAlgorithm):
             init_msg = f"🚀 Starting MassGen task with {len(self.agents)} agents"
             self.streaming_orchestrator.add_system_message(init_msg)
 
-        self._log_event(
-            "task_started", {"task_id": task.task_id, "question": task.question}
-        )
+        self._log_event("task_started", {"task_id": task.task_id, "question": task.question})
 
     def _run_mass_workflow(self, task: TaskInput) -> None:
         """Run the MassGen workflow with dynamic agent restart support."""
@@ -281,16 +270,12 @@ class CanopyAlgorithm(BaseAlgorithm):
                         self.streaming_orchestrator.update_debate_rounds(debate_rounds)
 
                     if debate_rounds > self.max_debate_rounds:
-                        logger.warning(
-                            f"⚠️ Maximum debate rounds ({self.max_debate_rounds}) reached"
-                        )
+                        logger.warning(f"⚠️ Maximum debate rounds ({self.max_debate_rounds}) reached")
                         self._force_consensus_by_timeout()
                         self._present_final_answer(task)
                         break
 
-                    logger.info(
-                        f"🗣️ No consensus - starting debate round {debate_rounds}"
-                    )
+                    logger.info(f"🗣️ No consensus - starting debate round {debate_rounds}")
                     self._restart_all_agents_for_debate()
             else:
                 # Still waiting for some agents to vote
@@ -340,16 +325,13 @@ class CanopyAlgorithm(BaseAlgorithm):
         # Remove completed futures
         for agent_id in completed_futures:
             del active_futures[agent_id]
-            
+
         return completed_futures
 
     def _restart_working_agents(self, task: TaskInput, executor, active_futures):
         """Restart any agents that need to be restarted."""
         for agent_id in self.agents.keys():
-            if (
-                agent_id not in active_futures
-                and self.agent_states[agent_id].status == "working"
-            ):
+            if agent_id not in active_futures and self.agent_states[agent_id].status == "working":
                 self._start_agent_if_working(agent_id, task, executor, active_futures)
 
     def _cleanup_executor(self, executor, active_futures):
@@ -366,10 +348,7 @@ class CanopyAlgorithm(BaseAlgorithm):
         active_futures: Dict,
     ) -> None:
         """Start an agent if it's in working status and not already running."""
-        if (
-            self.agent_states[agent_id].status == "working"
-            and agent_id not in active_futures
-        ):
+        if self.agent_states[agent_id].status == "working" and agent_id not in active_futures:
             self.agent_states[agent_id].execution_start_time = time.time()
             future = executor.submit(self._run_single_agent, agent_id, task)
             active_futures[agent_id] = future
@@ -390,17 +369,11 @@ class CanopyAlgorithm(BaseAlgorithm):
 
             # Update streaming display with chat round
             if self.streaming_orchestrator:
-                self.streaming_orchestrator.update_agent_chat_round(
-                    agent_id, agent.state.chat_round
-                )
+                self.streaming_orchestrator.update_agent_chat_round(agent_id, agent.state.chat_round)
                 update_count = len(self.agent_states[agent_id].updated_answers)
-                self.streaming_orchestrator.update_agent_update_count(
-                    agent_id, update_count
-                )
+                self.streaming_orchestrator.update_agent_update_count(agent_id, update_count)
 
-            logger.info(
-                f"✅ Agent {agent_id} completed work with status: {self.agent_states[agent_id].status}"
-            )
+            logger.info(f"✅ Agent {agent_id} completed work with status: {self.agent_states[agent_id].status}")
 
         except Exception as e:
             logger.error(f"❌ Agent {agent_id} failed: {e}")
@@ -408,14 +381,8 @@ class CanopyAlgorithm(BaseAlgorithm):
 
     def _all_agents_voted(self) -> bool:
         """Check if all votable agents have voted."""
-        votable_agents = [
-            aid
-            for aid, state in self.agent_states.items()
-            if state.status not in ["failed"]
-        ]
-        voted_agents = [
-            aid for aid, state in self.agent_states.items() if state.status == "voted"
-        ]
+        votable_agents = [aid for aid, state in self.agent_states.items() if state.status not in ["failed"]]
+        voted_agents = [aid for aid, state in self.agent_states.items() if state.status == "voted"]
 
         return len(voted_agents) == len(votable_agents) and len(votable_agents) > 0
 
@@ -426,12 +393,8 @@ class CanopyAlgorithm(BaseAlgorithm):
         # Update streaming display
         if self.streaming_orchestrator:
             self.streaming_orchestrator.reset_consensus()
-            self.streaming_orchestrator.update_phase(
-                self.system_state.phase, "collaboration"
-            )
-            self.streaming_orchestrator.add_system_message(
-                "🗣️ Starting debate phase - no consensus reached"
-            )
+            self.streaming_orchestrator.update_phase(self.system_state.phase, "collaboration")
+            self.streaming_orchestrator.add_system_message("🗣️ Starting debate phase - no consensus reached")
 
         # Log debate start
         if self.log_manager:
@@ -485,9 +448,7 @@ class CanopyAlgorithm(BaseAlgorithm):
     def _check_consensus(self) -> bool:
         """Check if consensus has been reached based on current votes."""
         total_agents = len(self.agents)
-        failed_agents_count = len(
-            [s for s in self.agent_states.values() if s.status == "failed"]
-        )
+        failed_agents_count = len([s for s in self.agent_states.values() if s.status == "failed"])
         votable_agents_count = total_agents - failed_agents_count
 
         # Edge case: no votable agents
@@ -497,17 +458,9 @@ class CanopyAlgorithm(BaseAlgorithm):
 
         # Edge case: only one votable agent
         if votable_agents_count == 1:
-            working_agents = [
-                aid
-                for aid, state in self.agent_states.items()
-                if state.status == "working"
-            ]
+            working_agents = [aid for aid, state in self.agent_states.items() if state.status == "working"]
             if not working_agents:  # The single agent has voted
-                votable_agent = [
-                    aid
-                    for aid, state in self.agent_states.items()
-                    if state.status != "failed"
-                ][0]
+                votable_agent = [aid for aid, state in self.agent_states.items() if state.status != "failed"][0]
                 logger.info(f"🎯 Single agent consensus: Agent {votable_agent}")
                 self._reach_consensus(votable_agent)
                 return True
@@ -522,9 +475,7 @@ class CanopyAlgorithm(BaseAlgorithm):
 
             # Ensure the winning agent is still votable (not failed)
             if self.agent_states[winning_agent_id].status == "failed":
-                logger.warning(
-                    f"⚠️ Winning agent {winning_agent_id} has failed - recalculating"
-                )
+                logger.warning(f"⚠️ Winning agent {winning_agent_id} has failed - recalculating")
                 return False
 
             logger.info(
@@ -545,9 +496,7 @@ class CanopyAlgorithm(BaseAlgorithm):
         # Update streaming orchestrator if available
         if self.streaming_orchestrator:
             vote_distribution = dict(self._get_current_vote_counts())
-            self.streaming_orchestrator.update_consensus_status(
-                winning_agent_id, vote_distribution
-            )
+            self.streaming_orchestrator.update_consensus_status(winning_agent_id, vote_distribution)
             self.streaming_orchestrator.update_phase(old_phase, "consensus")
 
         # Log to the comprehensive logging system
@@ -633,19 +582,11 @@ The final answer must be self-contained, complete, well-sourced, compelling, and
         if vote_counts:
             # Select agent with most votes
             winning_agent_id = vote_counts.most_common(1)[0][0]
-            logger.info(
-                f"   Selected Agent {winning_agent_id} with {vote_counts[winning_agent_id]} votes"
-            )
+            logger.info(f"   Selected Agent {winning_agent_id} with {vote_counts[winning_agent_id]} votes")
         else:
             # No votes - select first working agent
-            working_agents = [
-                aid
-                for aid, state in self.agent_states.items()
-                if state.status == "working"
-            ]
-            winning_agent_id = (
-                working_agents[0] if working_agents else list(self.agents.keys())[0]
-            )
+            working_agents = [aid for aid, state in self.agent_states.items() if state.status == "working"]
+            winning_agent_id = working_agents[0] if working_agents else list(self.agents.keys())[0]
             logger.info(f"   No votes - selected Agent {winning_agent_id} as fallback")
 
         self._reach_consensus(winning_agent_id)
@@ -658,9 +599,7 @@ The final answer must be self-contained, complete, well-sourced, compelling, and
             self.system_state.end_time = time.time()
 
         session_duration = (
-            self.system_state.end_time - self.system_state.start_time
-            if self.system_state.start_time
-            else 0
+            self.system_state.end_time - self.system_state.start_time if self.system_state.start_time else 0
         )
 
         # Save final agent states to files
@@ -683,16 +622,13 @@ The final answer must be self-contained, complete, well-sourced, compelling, and
             session_duration=session_duration,
             summary={
                 "total_agents": len(self.agents),
-                "failed_agents": len(
-                    [s for s in self.agent_states.values() if s.status == "failed"]
-                ),
+                "failed_agents": len([s for s in self.agent_states.values() if s.status == "failed"]),
                 "total_votes": len(self.votes),
                 "final_vote_distribution": dict(self._get_current_vote_counts()),
             },
             system_logs=self._export_detailed_session_log(),
             algorithm_specific_data={
-                "debate_rounds": self.system_state.phase == "collaboration"
-                and len(self.votes) > len(self.agents),
+                "debate_rounds": self.system_state.phase == "collaboration" and len(self.votes) > len(self.agents),
                 "algorithm": "massgen",
             },
         )
@@ -705,9 +641,7 @@ The final answer must be self-contained, complete, well-sourced, compelling, and
 
     def _log_event(self, event_type: str, data: Dict[str, Any]) -> None:
         """Log an orchestrator event."""
-        self.communication_log.append(
-            {"timestamp": time.time(), "event_type": event_type, "data": data}
-        )
+        self.communication_log.append({"timestamp": time.time(), "event_type": event_type, "data": data})
 
     def _export_detailed_session_log(self) -> Dict[str, Any]:
         """Export complete detailed session information."""
@@ -716,9 +650,7 @@ The final answer must be self-contained, complete, well-sourced, compelling, and
         session_log = {
             "session_metadata": {
                 "session_id": (
-                    f"mass_session_{int(self.system_state.start_time)}"
-                    if self.system_state.start_time
-                    else None
+                    f"mass_session_{int(self.system_state.start_time)}" if self.system_state.start_time else None
                 ),
                 "start_time": self.system_state.start_time,
                 "end_time": self.system_state.end_time,
@@ -732,15 +664,9 @@ The final answer must be self-contained, complete, well-sourced, compelling, and
                 "algorithm": "massgen",
             },
             "task_information": {
-                "question": (
-                    self.system_state.task.question if self.system_state.task else None
-                ),
-                "task_id": (
-                    self.system_state.task.task_id if self.system_state.task else None
-                ),
-                "context": (
-                    self.system_state.task.context if self.system_state.task else None
-                ),
+                "question": (self.system_state.task.question if self.system_state.task else None),
+                "task_id": (self.system_state.task.task_id if self.system_state.task else None),
+                "context": (self.system_state.task.context if self.system_state.task else None),
             },
             "system_configuration": {
                 "max_duration": self.max_duration,
@@ -754,9 +680,7 @@ The final answer must be self-contained, complete, well-sourced, compelling, and
                     "updates_count": len(state.updated_answers),
                     "chat_length": len(state.chat_history),
                     "chat_round": state.chat_round,
-                    "vote_target": (
-                        state.curr_vote.target_id if state.curr_vote else None
-                    ),
+                    "vote_target": (state.curr_vote.target_id if state.curr_vote else None),
                     "execution_time": state.execution_time,
                     "execution_start_time": state.execution_start_time,
                     "execution_end_time": state.execution_end_time,
@@ -795,8 +719,7 @@ The final answer must be self-contained, complete, well-sourced, compelling, and
                     "timestamp": entry["timestamp"],
                     "event_type": entry["event_type"],
                     "data_summary": {
-                        k: (len(v) if isinstance(v, (str, list, dict)) else v)
-                        for k, v in entry["data"].items()
+                        k: (len(v) if isinstance(v, (str, list, dict)) else v) for k, v in entry["data"].items()
                     },
                 }
                 for entry in self.communication_log

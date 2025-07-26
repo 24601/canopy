@@ -3,20 +3,24 @@ MCP (Model Context Protocol) server for Canopy.
 
 This server implements the latest MCP specification (2025-06-18) with:
 - Security-first design with resource indicators (RFC 8707)
-- OAuth 2.1 support for authentication
+- Enhanced input validation and sanitization
 - Structured output support for tools
 - Cursor pagination for list methods
 - Both stdio and HTTP transports
+
+Note: OAuth 2.1 authentication support is planned for a future release.
 
 Built on MassGen by the AG2 team.
 """
 
 import asyncio
+import html
 import json
 import logging
 import os
 import re
 from typing import Any, Dict, List, Optional, Union
+from urllib.parse import unquote
 
 from mcp import Resource, Tool, server
 from mcp.server.models import InitializationOptions
@@ -31,7 +35,7 @@ from mcp.types import (
     PromptMessage,
     TextContent,
 )
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 
 from canopy_core.config import create_config_from_models, load_config_from_yaml
 from canopy_core.main import run_mass_with_config
@@ -48,12 +52,8 @@ class CanopyQueryOutput(BaseModel):
 
     answer: str = Field(..., description="The consensus answer from multiple agents")
     consensus_reached: bool = Field(..., description="Whether agents reached consensus")
-    confidence: float = Field(
-        ..., description="Confidence score (0.0-1.0)", ge=0.0, le=1.0
-    )
-    representative_agent: Optional[str] = Field(
-        None, description="ID of the representative agent"
-    )
+    confidence: float = Field(..., description="Confidence score (0.0-1.0)", ge=0.0, le=1.0)
+    representative_agent: Optional[str] = Field(None, description="ID of the representative agent")
     debate_rounds: int = Field(0, description="Number of debate rounds")
     execution_time_ms: int = Field(..., description="Execution time in milliseconds")
 
@@ -64,9 +64,7 @@ class AnalysisResult(BaseModel):
     analysis_type: str = Field(..., description="Type of analysis performed")
     results: Dict[str, Any] = Field(..., description="Analysis results")
     summary: str = Field(..., description="Summary of findings")
-    recommendations: List[str] = Field(
-        default_factory=list, description="Recommendations based on analysis"
-    )
+    recommendations: List[str] = Field(default_factory=list, description="Recommendations based on analysis")
 
 
 @app.list_resources()
@@ -201,7 +199,7 @@ async def read_resource(uri: str) -> Union[TextContent, ImageContent]:
             "policies": {
                 "authentication": {
                     "required_for": ["production", "sensitive_data"],
-                    "methods": ["oauth2.1", "api_key"],
+                    "methods": ["api_key"],  # OAuth 2.1 planned for future release
                 },
                 "data_handling": {
                     "no_pii_storage": True,
@@ -358,77 +356,77 @@ async def list_tools() -> ListToolsResult:
 
 class InputValidator:
     """Enhanced input validation for security."""
-    
+
     # Maximum input lengths by type
     MAX_QUESTION_LENGTH = 10000
     MAX_CONFIG_PATH_LENGTH = 500
-    
+
     # Compiled regex patterns for performance - focus on actual injection patterns
     SQL_INJECTION_PATTERN = re.compile(
         r"(?i)(;.*\b(DROP|DELETE|INSERT|UPDATE|ALTER)\b|--.*$|\*/|\/\*|(UNION.*SELECT)|(OR\s+1\s*=\s*1)|(AND\s+1\s*=\s*1)|(\'\s*;\s*)|(\'\s*OR\s+))",
-        re.IGNORECASE | re.MULTILINE
+        re.IGNORECASE | re.MULTILINE,
     )
-    
-    SCRIPT_INJECTION_PATTERN = re.compile(
-        r"(<script[\s\S]*?>[\s\S]*?</script>|javascript:|on\w+\s*=)",
-        re.IGNORECASE
-    )
-    
+
+    SCRIPT_INJECTION_PATTERN = re.compile(r"(<script[\s\S]*?>[\s\S]*?</script>|javascript:|on\w+\s*=)", re.IGNORECASE)
+
     PATH_TRAVERSAL_PATTERN = re.compile(r"(\.\.\/|\.\.\\|%2e%2e%2f|%2e%2e%5c)", re.IGNORECASE)
-    
-    COMMAND_INJECTION_PATTERN = re.compile(
-        r"(\||;|&|`|\$\(|\${|<|>|>>|\\\n|\r\n?)",
-        re.MULTILINE
-    )
+
+    COMMAND_INJECTION_PATTERN = re.compile(r"(\||;|&|`|\$\(|\${|<|>|>>|\\\n|\r\n?)", re.MULTILINE)
 
     @staticmethod
     def validate_question(text: str) -> str:
-        """Validate and sanitize question input."""
+        """Validate and sanitize question input with comprehensive security checks."""
         if not isinstance(text, str):
             raise ValueError("Question must be a string")
-        
+
         if len(text) > InputValidator.MAX_QUESTION_LENGTH:
             raise ValueError(f"Question too long (max {InputValidator.MAX_QUESTION_LENGTH} chars)")
-        
+
         if len(text.strip()) == 0:
             raise ValueError("Question cannot be empty")
-        
-        # Check for injection patterns
-        if InputValidator.SQL_INJECTION_PATTERN.search(text):
-            raise ValueError("Potentially malicious SQL pattern detected")
-        
-        if InputValidator.SCRIPT_INJECTION_PATTERN.search(text):
-            raise ValueError("Potentially malicious script pattern detected")
-        
-        if InputValidator.COMMAND_INJECTION_PATTERN.search(text):
-            raise ValueError("Potentially malicious command pattern detected")
-        
-        # Remove any null bytes and control characters except normal whitespace
-        sanitized = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', text)
-        
+
+        # Decode HTML entities and URL encoding to catch obfuscated attacks
+        decoded_text = html.unescape(unquote(text))
+
+        # Check for injection patterns in both original and decoded text
+        for check_text in [text, decoded_text]:
+            if InputValidator.SQL_INJECTION_PATTERN.search(check_text):
+                raise ValueError("Potentially malicious SQL pattern detected")
+
+            if InputValidator.SCRIPT_INJECTION_PATTERN.search(check_text):
+                raise ValueError("Potentially malicious script pattern detected")
+
+            if InputValidator.COMMAND_INJECTION_PATTERN.search(check_text):
+                raise ValueError("Potentially malicious command pattern detected")
+
+        # Remove null bytes, control characters, and excessive whitespace
+        sanitized = re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]", "", text)
+        sanitized = re.sub(r"\s+", " ", sanitized)  # Normalize whitespace
+
         return sanitized.strip()
 
-    @staticmethod  
+    @staticmethod
     def validate_config_path(path: str) -> str:
         """Validate configuration file path."""
         if not isinstance(path, str):
             raise ValueError("Config path must be a string")
-        
+
         if len(path) > InputValidator.MAX_CONFIG_PATH_LENGTH:
             raise ValueError(f"Config path too long (max {InputValidator.MAX_CONFIG_PATH_LENGTH} chars)")
-        
+
         # Check for path traversal
         if InputValidator.PATH_TRAVERSAL_PATTERN.search(path):
             raise ValueError("Path traversal detected in config path")
-        
+
         # Only allow .yaml and .yml files
-        if not (path.endswith('.yaml') or path.endswith('.yml')):
+        if not (path.endswith(".yaml") or path.endswith(".yml")):
             raise ValueError("Config path must end with .yaml or .yml")
-        
+
         # Remove null bytes and control characters
-        sanitized = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', path)
-        
+        sanitized = re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]", "", path)
+
         return sanitized
+
 
 def sanitize_input(text: str) -> str:
     """Legacy function for backward compatibility - use InputValidator instead."""
@@ -596,9 +594,7 @@ async def _compare_algorithms(question: str, models: List[str]) -> tuple:
         )
         # Disable streaming display for MCP server usage
         config.streaming_display.display_enabled = False
-        result = await asyncio.to_thread(
-            run_mass_with_config, question, config
-        )
+        result = await asyncio.to_thread(run_mass_with_config, question, config)
         results[algorithm] = {
             "answer": result["answer"][:500],
             "consensus": result["consensus_reached"],
@@ -607,12 +603,9 @@ async def _compare_algorithms(question: str, models: List[str]) -> tuple:
         }
 
     summary = "Both algorithms provided answers. "
-    if (
-        results["massgen"]["consensus"]
-        and results["treequest"]["consensus"]
-    ):
+    if results["massgen"]["consensus"] and results["treequest"]["consensus"]:
         summary += "Both achieved consensus. "
-    elif results["canopy"]["consensus"]:
+    elif results["massgen"]["consensus"]:
         summary += "Only MassGen achieved consensus. "
     elif results["treequest"]["consensus"]:
         summary += "Only TreeQuest achieved consensus. "
@@ -620,12 +613,9 @@ async def _compare_algorithms(question: str, models: List[str]) -> tuple:
         summary += "Neither achieved full consensus. "
 
     recommendations = []
-    if results["canopy"]["duration"] < results["treequest"]["duration"]:
+    if results["massgen"]["duration"] < results["treequest"]["duration"]:
         recommendations.append("Use MassGen for faster results")
-    if (
-        results["treequest"]["confidence"]
-        > results["canopy"]["confidence"]
-    ):
+    if results["treequest"]["confidence"] > results["massgen"]["confidence"]:
         recommendations.append("Use TreeQuest for higher confidence")
 
     return results, summary, recommendations
@@ -638,13 +628,8 @@ def _analyze_security(question: str) -> tuple:
     # Analyze query for potential security issues
     security_checks = {
         "query_length": len(question) < 5000,
-        "no_injection_patterns": not any(
-            p in question for p in ["';", "--", "DROP"]
-        ),
-        "no_pii": not any(
-            p in question.lower()
-            for p in ["ssn", "credit card", "password"]
-        ),
+        "no_injection_patterns": not any(p in question for p in ["';", "--", "DROP"]),
+        "no_pii": not any(p in question.lower() for p in ["ssn", "credit card", "password"]),
     }
 
     results = {
@@ -656,22 +641,12 @@ def _analyze_security(question: str) -> tuple:
                 if security_checks["no_injection_patterns"]
                 else "Review input for potential injection"
             ),
-            (
-                "Query length acceptable"
-                if security_checks["query_length"]
-                else "Consider shortening query"
-            ),
-            (
-                "No PII detected"
-                if security_checks["no_pii"]
-                else "Remove PII from query"
-            ),
+            ("Query length acceptable" if security_checks["query_length"] else "Consider shortening query"),
+            ("No PII detected" if security_checks["no_pii"] else "Remove PII from query"),
         ],
     }
 
-    summary = (
-        f"Security analysis complete. Risk level: {results['risk_level']}"
-    )
+    summary = f"Security analysis complete. Risk level: {results['risk_level']}"
     recommendations = results["recommendations"]
 
     return results, summary, recommendations
@@ -705,9 +680,7 @@ async def list_prompts() -> List[Prompt]:
             name="consensus_analysis",
             description="Analyze a topic using multi-agent consensus",
             arguments=[
-                PromptArgument(
-                    name="topic", description="The topic to analyze", required=True
-                ),
+                PromptArgument(name="topic", description="The topic to analyze", required=True),
                 PromptArgument(
                     name="depth",
                     description="Analysis depth (basic, standard, thorough)",
@@ -718,11 +691,7 @@ async def list_prompts() -> List[Prompt]:
         Prompt(
             name="security_review",
             description="Review query for security considerations",
-            arguments=[
-                PromptArgument(
-                    name="query", description="The query to review", required=True
-                )
-            ],
+            arguments=[PromptArgument(name="query", description="The query to review", required=True)],
         ),
     ]
 

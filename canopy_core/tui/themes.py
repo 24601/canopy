@@ -1,9 +1,7 @@
 """Theme system for MassGen TUI with multiple color schemes."""
 
 from dataclasses import dataclass
-from typing import Dict, Optional
-
-from textual.design import ColorSystem
+from typing import Dict
 
 
 @dataclass
@@ -51,21 +49,21 @@ class Theme:
 THEMES: Dict[str, Theme] = {
     "dark": Theme(
         name="dark",
-        description="Default dark theme with high contrast",
-        primary="#00d9ff",
-        secondary="#ff6b6b",
-        background="#0c0c0c",
-        surface="#1a1a1a",
-        panel="#262626",
-        accent="#ffd700",
-        success="#4ade80",
-        warning="#fb923c",
-        error="#f87171",
-        text="#ffffff",
-        text_muted="#a1a1aa",
-        text_disabled="#52525b",
-        border="#3f3f46",
-        border_focused="#00d9ff",
+        description="EXTREME HIGH CONTRAST dark theme - MAXIMUM VISIBILITY",
+        primary="#00ffff",  # Bright cyan - very visible
+        secondary="#ff0080",  # Bright magenta
+        background="#000000",  # Pure black for maximum contrast
+        surface="#505050",  # Very light gray surface for maximum contrast
+        panel="#707070",  # Even lighter panel - easily distinguishable
+        accent="#ffff00",  # Bright yellow accent
+        success="#00ff00",  # Bright green
+        warning="#ff8000",  # Bright orange
+        error="#ff0000",  # Bright red
+        text="#ffffff",  # Pure white text
+        text_muted="#f0f0f0",  # Almost white for muted text - NO MORE DARK GRAY!
+        text_disabled="#c0c0c0",  # Very visible disabled text
+        border="#a0a0a0",  # Very light gray borders - extremely visible
+        border_focused="#00ffff",
     ),
     "light": Theme(
         name="light",
@@ -262,223 +260,226 @@ class ThemeManager:
         return f"""
         /* Theme: {theme.name} */
         {theme.to_css_variables()}
-        
+
         /* Global theme application */
         Screen {{
             background: $background;
             color: $text;
         }}
-        
+
         /* Panel styling */
         .panel {{
             background: $panel;
             border: tall $border;
         }}
-        
+
         .panel:focus {{
             border: tall $border-focused;
         }}
-        
+
         /* Agent panels */
         AgentPanel {{
             background: $surface;
             border: tall $border;
             color: $text;
         }}
-        
+
         AgentPanel:focus {{
             border: tall $border-focused;
         }}
-        
+
         AgentPanel.working {{
             border: tall $primary;
+            background: $primary 15%;
         }}
-        
+
         AgentPanel.voting {{
             border: tall $accent;
+            background: $accent 15%;
         }}
-        
+
         AgentPanel.error {{
             border: tall $error;
-            background: $error 10%;
+            background: $error 20%;
         }}
-        
+
         /* System status panel */
         SystemStatusPanel {{
             background: $surface;
             border: tall $border;
+            color: $text;
         }}
-        
+
         SystemStatusPanel .status-active {{
             color: $success;
         }}
-        
+
         SystemStatusPanel .status-paused {{
             color: $warning;
         }}
-        
+
         SystemStatusPanel .status-error {{
             color: $error;
         }}
-        
+
         /* Vote distribution */
         VoteDistribution {{
             background: $surface;
             border: tall $border;
         }}
-        
+
         VoteDistribution .vote-bar {{
             background: $primary;
         }}
-        
+
         VoteDistribution .consensus-reached {{
             color: $success;
         }}
-        
+
         /* Trace panel */
         TracePanel {{
             background: $surface;
             border: tall $border;
         }}
-        
+
         TracePanel .trace-info {{
             color: $text-muted;
         }}
-        
+
         TracePanel .trace-warning {{
             color: $warning;
         }}
-        
+
         TracePanel .trace-error {{
             color: $error;
         }}
-        
+
         /* Buttons */
         Button {{
             background: $surface;
             color: $text;
             border: tall $border;
         }}
-        
+
         Button:hover {{
             background: $panel;
             border: tall $primary;
         }}
-        
+
         Button:focus {{
             background: $panel;
             border: tall $border-focused;
         }}
-        
+
         Button.primary {{
             background: $primary;
             color: $background;
         }}
-        
+
         Button.success {{
             background: $success;
             color: $background;
         }}
-        
+
         Button.warning {{
             background: $warning;
             color: $background;
         }}
-        
+
         Button.error {{
             background: $error;
             color: $background;
         }}
-        
+
         /* Input fields */
         Input {{
             background: $surface;
             border: tall $border;
             color: $text;
         }}
-        
+
         Input:focus {{
             border: tall $border-focused;
         }}
-        
+
         /* Labels and text */
         Label {{
             color: $text;
         }}
-        
+
         Label.muted {{
             color: $text-muted;
         }}
-        
+
         Label.disabled {{
             color: $text-disabled;
         }}
-        
+
         /* Scrollbars */
         ScrollBar {{
             background: $surface;
         }}
-        
+
         ScrollBarThumb {{
             background: $border;
         }}
-        
+
         ScrollBarThumb:hover {{
             background: $primary;
         }}
-        
+
         /* Modal dialogs */
         ModalScreen {{
             background: $background 90%;
         }}
-        
+
         .dialog {{
             background: $surface;
             border: thick $border;
             padding: 1 2;
         }}
-        
+
         /* DataTable */
         DataTable {{
             background: $surface;
             color: $text;
         }}
-        
+
         DataTable > .datatable--header {{
             background: $panel;
             color: $text;
             text-style: bold;
         }}
-        
+
         DataTable > .datatable--cursor {{
             background: $primary 20%;
         }}
-        
+
         DataTable > .datatable--hover {{
             background: $primary 10%;
         }}
-        
+
         /* Tree view */
         Tree {{
             background: $surface;
             color: $text;
         }}
-        
+
         Tree > .tree--cursor {{
             background: $primary 20%;
         }}
-        
+
         /* Footer */
         Footer {{
             background: $panel;
             color: $text-muted;
         }}
-        
+
         Footer > .footer--key {{
             background: $surface;
             color: $text;
         }}
-        
+
         Footer > .footer--description {{
             color: $text-muted;
         }}

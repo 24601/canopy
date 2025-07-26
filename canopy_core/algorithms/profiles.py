@@ -12,7 +12,7 @@ for algorithms, allowing users to easily select pre-configured setups like
 import json
 import logging
 from dataclasses import asdict, dataclass, field
-from pathlib import Path
+from pathlib import Path  # noqa: TC003
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -72,9 +72,21 @@ class ProfileRegistry:
                     "thread_pool_timeout": 300,
                 },
                 models=[
-                    {"agent_type": "openai", "model": "gpt-4o-mini", "temperature": 0.7},
-                    {"agent_type": "openai", "model": "gpt-4o-mini", "temperature": 0.7},
-                    {"agent_type": "openai", "model": "gpt-4o-mini", "temperature": 0.7},
+                    {
+                        "agent_type": "openai",
+                        "model": "gpt-4o-mini",
+                        "temperature": 0.7,
+                    },
+                    {
+                        "agent_type": "openai",
+                        "model": "gpt-4o-mini",
+                        "temperature": 0.7,
+                    },
+                    {
+                        "agent_type": "openai",
+                        "model": "gpt-4o-mini",
+                        "temperature": 0.7,
+                    },
                 ],
                 orchestrator_config={"max_duration": 600, "consensus_threshold": 0.5},
             )
@@ -96,11 +108,26 @@ class ProfileRegistry:
                     "enable_multi_model": True,
                 },
                 models=[
-                    {"agent_type": "openai", "model": "gpt-4o-mini", "temperature": 0.6},
-                    {"agent_type": "gemini", "model": "gemini-2.5-pro", "temperature": 0.6},
-                    {"agent_type": "openrouter", "model": "deepseek/deepseek-r1-0528", "temperature": 0.6},
+                    {
+                        "agent_type": "openai",
+                        "model": "gpt-4o-mini",
+                        "temperature": 0.6,
+                    },
+                    {
+                        "agent_type": "gemini",
+                        "model": "gemini-2.5-pro",
+                        "temperature": 0.6,
+                    },
+                    {
+                        "agent_type": "openrouter",
+                        "model": "deepseek/deepseek-r1-0528",
+                        "temperature": 0.6,
+                    },
                 ],
-                orchestrator_config={"max_duration": 1200, "algorithm": "treequest"},  # Longer for tree search
+                orchestrator_config={
+                    "max_duration": 1200,
+                    "algorithm": "treequest",
+                },  # Longer for tree search
             )
         )
 
@@ -140,9 +167,17 @@ class ProfileRegistry:
                 },
                 models=[
                     {"agent_type": "openai", "model": "gpt-4o", "temperature": 0.7},
-                    {"agent_type": "gemini", "model": "gemini-2.5-pro", "temperature": 0.7},
+                    {
+                        "agent_type": "gemini",
+                        "model": "gemini-2.5-pro",
+                        "temperature": 0.7,
+                    },
                     {"agent_type": "grok", "model": "grok-4", "temperature": 0.7},
-                    {"agent_type": "openrouter", "model": "deepseek/deepseek-r1", "temperature": 0.7},
+                    {
+                        "agent_type": "openrouter",
+                        "model": "deepseek/deepseek-r1",
+                        "temperature": 0.7,
+                    },
                 ],
                 orchestrator_config={"max_duration": 900, "consensus_threshold": 0.6},
             )
