@@ -1,6 +1,6 @@
 # 🌳 Canopy: Multi-Agent Consensus through Tree-Based Exploration
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
 > **Note**: Canopy's core functionality is implemented but still undergoing validation and refinement. While the system is functional, we're focused on ensuring quality through comprehensive testing before considering features truly "complete". We believe in shipping quality over speed and welcome community feedback to help us achieve production-ready stability.
@@ -17,10 +17,7 @@ Get Canopy running in under 5 minutes!
 # Option 1: Automated setup (Unix/Linux/macOS)
 ./quickstart.sh
 
-# Option 2: Automated setup (Windows)
-.\quickstart.ps1
-
-# Option 3: Manual install
+# Option 2: Manual install
 pip install canopy
 
 # Set your API key (get one free at https://openrouter.ai/)
