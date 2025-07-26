@@ -1,0 +1,266 @@
+/* MassGen Textual TUI Styles */
+
+/* Global styles */
+Screen {
+    background: $background;
+}
+
+/* Main container */
+#main-container {
+    layout: vertical;
+    height: 100%;
+}
+
+/* System Status Panel */
+#system-status-panel {
+    height: auto;
+    padding: 1;
+    border: solid $primary;
+    margin: 1;
+}
+
+.system-title {
+    text-align: center;
+    text-style: bold;
+    color: $text;
+    margin-bottom: 1;
+}
+
+.status-grid {
+    layout: grid;
+    grid-size: 5 1;
+    grid-gutter: 1;
+    margin-bottom: 1;
+}
+
+.status-item {
+    layout: vertical;
+    align: center middle;
+}
+
+.status-label {
+    text-style: dim;
+    margin-bottom: 0;
+}
+
+.status-value {
+    text-style: bold;
+}
+
+.section-title {
+    text-style: bold;
+    color: $text;
+    margin-top: 1;
+    margin-bottom: 1;
+}
+
+.vote-distribution {
+    padding: 0 1;
+    height: auto;
+}
+
+#system-messages-table {
+    height: 10;
+    margin-top: 1;
+}
+
+/* Agents Container */
+#agents-container {
+    layout: horizontal;
+    height: 1fr;
+    overflow-y: scroll;
+}
+
+#agents-placeholder {
+    width: 100%;
+    text-align: center;
+    text-style: dim italic;
+    margin-top: 5;
+}
+
+/* Agent Panel */
+AgentPanel {
+    width: 1fr;
+    min-width: 30;
+    border: solid $primary;
+    margin: 1;
+    padding: 1;
+}
+
+.agent-header {
+    text-align: center;
+    text-style: bold;
+    color: $text;
+    margin-bottom: 1;
+}
+
+.agent-status-bar {
+    layout: horizontal;
+    height: 1;
+    margin-bottom: 1;
+}
+
+.agent-model {
+    width: 1fr;
+    text-align: left;
+}
+
+.agent-status {
+    width: auto;
+    text-align: right;
+}
+
+.agent-metadata {
+    layout: horizontal;
+    height: 1;
+    margin-bottom: 1;
+}
+
+.agent-meta-item {
+    width: 1fr;
+    text-align: center;
+    text-style: dim;
+}
+
+#agent-output-container-* {
+    height: 1fr;
+    border: solid $surface;
+    padding: 1;
+    overflow-y: scroll;
+}
+
+.agent-output {
+    width: 100%;
+}
+
+/* Vote Distribution Widget */
+#vote-distribution {
+    height: auto;
+    border: solid $primary;
+    margin: 1;
+    padding: 1;
+}
+
+.vote-bar-container {
+    layout: horizontal;
+    height: 1;
+    margin-bottom: 1;
+}
+
+.vote-bar-label {
+    width: 10;
+    text-align: right;
+    margin-right: 1;
+}
+
+.vote-bar {
+    width: 1fr;
+}
+
+/* Log Viewer */
+#log-viewer {
+    dock: bottom;
+    height: 15;
+    border: solid $warning;
+    margin: 1;
+}
+
+#log-viewer.hidden {
+    display: none;
+}
+
+.log-entry {
+    margin-bottom: 1;
+}
+
+.log-timestamp {
+    text-style: dim;
+    margin-right: 1;
+}
+
+/* Trace Panel */
+#trace-panel {
+    dock: right;
+    width: 40;
+    border: solid $accent;
+    margin: 1;
+}
+
+#trace-panel.hidden {
+    display: none;
+}
+
+.trace-entry {
+    border: solid $surface;
+    margin-bottom: 1;
+    padding: 1;
+}
+
+.trace-header {
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+/* Scrollbar styling */
+ScrollBar {
+    background: $surface;
+}
+
+ScrollBarThumb {
+    background: $primary;
+}
+
+/* DataTable styling */
+DataTable {
+    background: $surface;
+}
+
+DataTable > .datatable--header {
+    background: $primary;
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: $secondary;
+}
+
+DataTable > .datatable--hover {
+    background: $secondary 50%;
+}
+
+DataTable > .datatable--even-row {
+    background: $surface;
+}
+
+DataTable > .datatable--odd-row {
+    background: $background;
+}
+
+/* Footer */
+Footer {
+    background: $panel;
+}
+
+/* Colors for different agent states */
+.status-working {
+    color: $warning;
+}
+
+.status-voted {
+    color: $success;
+}
+
+.status-failed {
+    color: $error;
+}
+
+/* Responsive adjustments */
+@media (max-width: 120) {
+    .status-grid {
+        grid-size: 3 2;
+    }
+    
+    AgentPanel {
+        min-width: 25;
+    }
+}

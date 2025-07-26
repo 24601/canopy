@@ -1,0 +1,32 @@
+[flake8]
+max-line-length = 120
+extend-ignore = E203, W503, E501
+exclude = 
+    .git,
+    __pycache__,
+    docs/source/conf.py,
+    old,
+    build,
+    dist,
+    .eggs,
+    .tox,
+    .venv,
+    venv,
+    env,
+    future_mass,
+    massgen/orchestrator.py,
+    massgen/agent.py,
+    massgen/agents.py,
+    massgen/backends/,
+    massgen/main.py,
+    massgen/streaming_display.py,
+    massgen/tools.py,
+    massgen/utils.py,
+    massgen/logging.py
+per-file-ignores =
+    __init__.py:F401
+    massgen/algorithms/*.py:F401
+max-complexity = 10
+count = True
+statistics = True
+show-source = True

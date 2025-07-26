@@ -1,22 +1,16 @@
 import inspect
 import json
 import random
-import subprocess
-import sys
-import time
-from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, Union, Optional, Dict, List
-import ast
-import operator
-import math
 
 # Model mappings and constants
 MODEL_MAPPINGS = {
     "openai": [
-        # GPT-4.1 variants
+        # GPT-4.5 variants (2025 latest)
+        "gpt-4.5",
+        # GPT-4.1 variants (2025 latest)
         "gpt-4.1",
         "gpt-4.1-mini",
+        "gpt-4.1-nano",
         # GPT-4o variants
         "gpt-4o-mini",
         "gpt-4o",
@@ -46,25 +40,43 @@ MODEL_MAPPINGS = {
         "grok-3-mini",
         "grok-3",
         "grok-4",
-    ]
+    ],
+    "anthropic": [
+        # Claude 4 variants (2025 latest)
+        "claude-4",
+        "claude-4-opus",
+        "claude-4-sonnet",
+        "claude-sonnet-4",
+        "claude-opus-4",
+        # Claude 3.7 variants
+        "claude-3.7-sonnet",
+        "claude-3.7-opus",
+        # Claude 3.5 variants
+        "claude-3.5-sonnet",
+        "claude-3.5-sonnet-20241022",
+        # Claude 3 variants
+        "claude-3-opus",
+        "claude-3-sonnet",
+        "claude-3-haiku",
+    ],
 }
 
 
 def get_agent_type_from_model(model: str) -> str:
     """
     Determine the agent type based on the model name.
-    
+
     Args:
         model: The model name (e.g., "gpt-4", "gemini-pro", "grok-1")
-        
+
     Returns:
         Agent type string ("openai", "gemini", "grok")
     """
     if not model:
         return "openai"  # Default to OpenAI
-    
+
     model_lower = model.lower()
-    
+
     for key, models in MODEL_MAPPINGS.items():
         if model_lower in models:
             return key
@@ -78,10 +90,12 @@ def get_available_models() -> list:
         all_models.extend(models)
     return all_models
 
+
 def generate_random_id(length: int = 24) -> str:
     """Generate a random ID string."""
-    characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-    return ''.join(random.choice(characters) for _ in range(length))
+    characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    return "".join(random.choice(characters) for _ in range(length))
+
 
 # Utility functions (originally from util.py)
 def execute_function_calls(function_calls, tool_mapping):
@@ -91,8 +105,8 @@ def execute_function_calls(function_calls, tool_mapping):
         try:
             # Get the function from tool mapping
             target_function = None
-            function_name = function_call.get('name')
-            
+            function_name = function_call.get("name")
+
             # Look up function in tool_mapping
             if function_name in tool_mapping:
                 target_function = tool_mapping[function_name]
@@ -100,41 +114,41 @@ def execute_function_calls(function_calls, tool_mapping):
                 # Handle error case
                 error_output = {
                     "type": "function_call_output",
-                    "call_id": function_call.get('call_id'),
-                    "output": f"Error: Function '{function_name}' not found in tool mapping"
+                    "call_id": function_call.get("call_id"),
+                    "output": f"Error: Function '{function_name}' not found in tool mapping",
                 }
                 function_outputs.append(error_output)
                 continue
-            
+
             # Parse arguments and execute function
-            if isinstance(function_call.get('arguments', {}), str):
-                arguments = json.loads(function_call.get('arguments', '{}'))
-            elif isinstance(function_call.get('arguments', {}), dict):
-                arguments = function_call.get('arguments', {})
+            if isinstance(function_call.get("arguments", {}), str):
+                arguments = json.loads(function_call.get("arguments", "{}"))
+            elif isinstance(function_call.get("arguments", {}), dict):
+                arguments = function_call.get("arguments", {})
             else:
                 raise ValueError(f"Unknown arguments type: {type(function_call.get('arguments', {}))}")
             result = target_function(**arguments)
-            
+
             # Format the output according to Responses API requirements
             function_output = {
                 "type": "function_call_output",
-                "call_id": function_call.get('call_id'),
-                "output": str(result)
+                "call_id": function_call.get("call_id"),
+                "output": str(result),
             }
             function_outputs.append(function_output)
-            
+
             # print(f"Executed function: {function_name}({arguments}) -> {result}")
-            
+
         except Exception as e:
             # Handle execution errors
             error_output = {
-                "type": "function_call_output", 
-                "call_id": function_call.get('call_id'),
-                "output": f"Error executing function: {str(e)}"
+                "type": "function_call_output",
+                "call_id": function_call.get("call_id"),
+                "output": f"Error executing function: {str(e)}",
             }
             function_outputs.append(error_output)
             # print(f"Error executing function {function_name}: {e}")
-            
+
     return function_outputs
 
 
@@ -184,4 +198,4 @@ def function_to_json(func) -> dict:
             "properties": parameters,
             "required": required,
         },
-    } 
+    }

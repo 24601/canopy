@@ -201,3 +201,7 @@ models/
 *.sqlite
 *.sqlite3
 gemini_streaming.txt
+
+
+.ctx
+.marketing/

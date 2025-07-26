@@ -1,0 +1,7 @@
+{
+  "hooks": {
+    "stop": {
+      "shell": "python massgen/hooks/lint_and_typecheck.py"
+    }
+  }
+}

@@ -1,19 +1,17 @@
 import os
-import threading
-import time
-import json
-import copy
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from openai import OpenAI
 
-# Import utility functions
-from massgen.utils import function_to_json, execute_function_calls
 from massgen.types import AgentResponse
 
-            
+# Import utility functions
+from massgen.utils import function_to_json
+
+
 def parse_completion(response, add_citations=True):
     """Parse the completion response from OpenAI API.
 
@@ -54,13 +52,15 @@ def parse_completion(response, add_citations=True):
             reasoning_items.append({"type": "reasoning", "id": r.id, "summary": r.summary})
         elif r.type == "function_call":
             # tool output - include call_id for Responses API
-            function_calls.append({
-                "type": "function_call",
-                "name": r.name, 
-                "arguments": r.arguments,
-                "call_id": getattr(r, "call_id", None),
-                "id": getattr(r, "id", None)
-            })
+            function_calls.append(
+                {
+                    "type": "function_call",
+                    "name": r.name,
+                    "arguments": r.arguments,
+                    "call_id": getattr(r, "call_id", None),
+                    "id": getattr(r, "id", None),
+                }
+            )
 
     # Add citations to text if available
     if add_citations and citations:
@@ -76,23 +76,22 @@ def parse_completion(response, add_citations=True):
             text = new_text
         except Exception as e:
             print(f"[OAI] Error adding citations to text: {e}")
-                    
-    return AgentResponse(
-        text=text,
-        code=code,
-        citations=citations,
-        function_calls=function_calls
-    )
 
-def process_message(messages, 
-                    model="gpt-4.1-mini", 
-                    tools=None, 
-                    max_retries=10, 
-                    max_tokens=None, 
-                    temperature=None, 
-                    top_p=None, 
-                    api_key=None, 
-                    stream=False, stream_callback=None):
+    return AgentResponse(text=text, code=code, citations=citations, function_calls=function_calls)
+
+
+def process_message(
+    messages,
+    model="gpt-4.1-mini",
+    tools=None,
+    max_retries=10,
+    max_tokens=None,
+    temperature=None,
+    top_p=None,
+    api_key=None,
+    stream=False,
+    stream_callback=None,
+):
     """
     Generate content using OpenAI API with optional streaming support.
 
@@ -143,7 +142,7 @@ def process_message(messages,
                 formatted_tools.append({"type": "code_interpreter", "container": {"type": "auto"}})
             else:
                 raise ValueError(f"Invalid tool type: {type(tool)}")
-                
+
     # Convert messages to the format expected by OpenAI responses API
     # For now, we'll use the last user message as input
     input_text = []
@@ -156,7 +155,7 @@ def process_message(messages,
             if message.get("type", "") == "function_call" and message.get("id", None) is not None:
                 del message["id"]
             input_text.append(message)
-            
+
     # Make API request with retry logic (use Responses API for all models)
     completion = None
     retry = 0
@@ -164,7 +163,7 @@ def process_message(messages,
         try:
             # Create a local copy of model to avoid scoping issues
             model_name = model
-            
+
             # Use responses API for all models (supports streaming)
             # Note: Response models doesn't support temperature parameter
             params = {
@@ -175,7 +174,7 @@ def process_message(messages,
                 "max_output_tokens": max_tokens if max_tokens else None,
                 "stream": True if stream and stream_callback else False,
             }
-            
+
             # CRITICAL: Include code interpreter outputs for streaming
             # Without this, code execution results (stdout/stderr) won't be available
             if formatted_tools and any(tool.get("type") == "code_interpreter" for tool in formatted_tools):
@@ -200,8 +199,8 @@ def process_message(messages,
                 else:
                     params["reasoning"] = {"effort": "low"}
             params["model"] = model_name
-            
-            # Inference        
+
+            # Inference
             response = client.responses.create(**params)
             completion = response
             break
@@ -209,6 +208,7 @@ def process_message(messages,
             print(f"Error on attempt {retry + 1}: {e}")
             retry += 1
             import time  # Local import to ensure availability in threading context
+
             time.sleep(1.5)
 
     if completion is None:
@@ -223,19 +223,19 @@ def process_message(messages,
         code = []
         citations = []
         function_calls = []
-        
+
         # Code streaming tracking
         code_lines_shown = 0
         current_code_chunk = ""
         truncation_message_sent = False
-        
+
         # Function call arguments streaming tracking
         current_function_call = None
         current_function_arguments = ""
 
         for chunk in completion:
             # Handle different event types from responses API streaming
-            if hasattr(chunk, "type"):                       
+            if hasattr(chunk, "type"):
                 if chunk.type == "response.output_text.delta":
                     # This is a text delta event
                     if hasattr(chunk, "delta") and chunk.delta:
@@ -269,29 +269,29 @@ def process_message(messages,
                         print(f"Stream callback error: {e}")
                 elif chunk.type == "response.code_interpreter_call_code.delta":
                     # Code being written/streamed
-                    if hasattr(chunk, 'delta') and chunk.delta:
+                    if hasattr(chunk, "delta") and chunk.delta:
                         try:
                             # Add to current code chunk for tracking
                             current_code_chunk += chunk.delta
-                            
+
                             # Count lines in this delta
-                            new_lines = chunk.delta.count('\n')
-                            
+                            new_lines = chunk.delta.count("\n")
+
                             if code_lines_shown < 3:
                                 # Still within first 3 lines - send normally for display & logging
                                 stream_callback(chunk.delta)
                                 code_lines_shown += new_lines
-                                
+
                                 # Check if we just exceeded 3 lines with this chunk
                                 if code_lines_shown >= 3 and not truncation_message_sent:
                                     # Send truncation message for display only (not logging)
-                                    stream_callback('\n[CODE_DISPLAY_ONLY]\n💻 ... (full code in log file)\n')
+                                    stream_callback("\n[CODE_DISPLAY_ONLY]\n💻 ... (full code in log file)\n")
                                     truncation_message_sent = True
                             else:
                                 # Beyond 3 lines - send with special prefix for logging only
                                 # The workflow can detect this prefix and log but not display
                                 stream_callback(f"[CODE_LOG_ONLY]{chunk.delta}")
-                                        
+
                         except Exception as e:
                             print(f"Stream callback error: {e}")
                 elif chunk.type == "response.code_interpreter_call_code.done":
@@ -339,12 +339,12 @@ def process_message(messages,
                                 "name": getattr(chunk.item, "name", None),
                                 "arguments": getattr(chunk.item, "arguments", None),
                                 "call_id": getattr(chunk.item, "call_id", None),
-                                "id": getattr(chunk.item, "id", None)
+                                "id": getattr(chunk.item, "id", None),
                             }
                             function_calls.append(function_call_data)
                             current_function_call = function_call_data
                             current_function_arguments = ""
-                            
+
                             # Notify function call started
                             function_name = function_call_data.get("name", "unknown")
                             try:
@@ -373,7 +373,7 @@ def process_message(messages,
                             if hasattr(chunk.item, "outputs") and chunk.item.outputs:
                                 for output in chunk.item.outputs:
                                     # Check if it's a dict-like object with a 'type' key (most common)
-                                    if hasattr(output, 'get') and output.get("type") == "logs":
+                                    if hasattr(output, "get") and output.get("type") == "logs":
                                         logs_content = output.get("logs")
                                         if logs_content:
                                             # Add execution result to text output
@@ -405,15 +405,15 @@ def process_message(messages,
                                     if fc.get("id") == getattr(chunk.item, "id", None):
                                         fc["arguments"] = chunk.item.arguments
                                         break
-                            
+
                             # Also update with accumulated arguments if available
                             if current_function_call and current_function_arguments:
                                 current_function_call["arguments"] = current_function_arguments
-                            
+
                             # Reset tracking
                             current_function_call = None
                             current_function_arguments = ""
-                            
+
                             # Notify function call completed
                             function_name = getattr(chunk.item, "name", "unknown")
                             try:
@@ -466,15 +466,15 @@ def process_message(messages,
                             if fc.get("id") == chunk.item_id:
                                 fc["arguments"] = chunk.arguments
                                 break
-                    
+
                     # Also update with accumulated arguments if available
                     if current_function_call and current_function_arguments:
                         current_function_call["arguments"] = current_function_arguments
-                    
+
                     # Reset tracking
                     current_function_call = None
                     current_function_arguments = ""
-                    
+
                     try:
                         stream_callback("\n🔧 Function arguments complete\n")
                     except Exception as e:
@@ -484,18 +484,14 @@ def process_message(messages,
                         stream_callback("\n✅ Response complete\n")
                     except Exception as e:
                         print(f"Stream callback error: {e}")
-                   
-        result = AgentResponse(
-            text=text,
-            code=code,
-            citations=citations,
-            function_calls=function_calls
-        )
+
+        result = AgentResponse(text=text, code=code, citations=citations, function_calls=function_calls)
     else:
         # Parse non-streaming response using existing parse_completion function
         result = parse_completion(completion, add_citations=True)
-        
+
     return result
+
 
 # Example usage (you can remove this if not needed)
 if __name__ == "__main__":

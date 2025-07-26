@@ -19,10 +19,10 @@ Key Features:
 
 Command-Line Usage:
     # Use cli.py for all command-line operations
-    
+
     # Single agent mode
     python cli.py "What is 2+2?" --models gpt-4o
-    
+
     # Multi-agent mode
     python cli.py "What is 2+2?" --models gpt-4o gemini-2.5-flash
     python cli.py "Complex question" --config examples/production.yaml
@@ -32,15 +32,15 @@ Programmatic Usage:
     from mass import run_mass_with_config, load_config_from_yaml
     config = load_config_from_yaml("config.yaml")
     result = run_mass_with_config("Your question here", config)
-    
+
     # Using simple model list (single agent)
     from mass import run_mass_agents
     result = run_mass_agents("What is 2+2?", ["gpt-4o"])
-    
+
     # Using simple model list (multi-agent)
     from mass import run_mass_agents
     result = run_mass_agents("What is 2+2?", ["gpt-4o", "gemini-2.5-flash"])
-    
+
     # Using configuration objects
     from mass import MassSystem, create_config_from_models
     config = create_config_from_models(["gpt-4o", "grok-3"])
@@ -48,60 +48,49 @@ Programmatic Usage:
     result = system.run("Complex question here")
 """
 
-# Core system components
-from .main import (
-    MassSystem, 
-    run_mass_agents, 
-    run_mass_with_config
-)
-
 # Configuration system
-from .config import (
-    load_config_from_yaml,
-    create_config_from_models,
-    ConfigurationError
-)
+from .config import ConfigurationError, create_config_from_models, load_config_from_yaml
+from .logging import MassLogManager
 
-# Configuration classes
-from .types import (
-    MassConfig,
-    OrchestratorConfig, 
-    AgentConfig,
-    ModelConfig,
-    StreamingDisplayConfig,
-    LoggingConfig,
-    TaskInput
-)
+# Core system components
+from .main import MassSystem, run_mass_agents, run_mass_with_config
 
 # Advanced components (for custom usage)
 from .orchestrator import MassOrchestrator
 from .streaming_display import create_streaming_display
-from .logging import MassLogManager
+
+# Configuration classes
+from .types import (
+    AgentConfig,
+    LoggingConfig,
+    MassConfig,
+    ModelConfig,
+    OrchestratorConfig,
+    StreamingDisplayConfig,
+    TaskInput,
+)
 
 __version__ = "1.0.0"
 
 __all__ = [
     # Main interfaces
     "MassSystem",
-    "run_mass_agents", 
+    "run_mass_agents",
     "run_mass_with_config",
-    
     # Configuration system
     "load_config_from_yaml",
     "create_config_from_models",
     "ConfigurationError",
-    
     # Configuration classes
     "MassConfig",
     "OrchestratorConfig",
-    "AgentConfig", 
+    "AgentConfig",
     "ModelConfig",
     "StreamingDisplayConfig",
     "LoggingConfig",
     "TaskInput",
-    
     # Advanced components
     "MassOrchestrator",
     "create_streaming_display",
     "MassLogManager",
-] 
+]
