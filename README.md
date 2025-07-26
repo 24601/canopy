@@ -345,7 +345,7 @@ make lint
 Canopy is built upon the excellent foundation provided by [MassGen](https://github.com/ag2ai/MassGen), created by the [AG2 team](https://github.com/ag2ai). We (uh, um, uh, I) are/am grateful for their pioneering work in multi-agent systems and collaborative AI.
 
 ### Original MassGen Team
-- The AG2/AutoGen team at Microsoft Research (and whatever dramatic schism came out of that to fork into AG2, etc, )
+- The AG2/AutoGen team at Microsoft Research (and whatever dramatic schism came out of that to fork into AG2, etc, IDK, it seemed like drama so I stayed out of that)
 - Contributors to the MassGen project
 
 ### Key Concepts From
