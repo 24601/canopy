@@ -156,6 +156,9 @@ def process_message(
     # Make API request with retry logic (use Responses API for all models)
     completion = None
     retry = 0
+    last_error = None
+    code_interpreter_disabled = False
+
     while retry < max_retries:
         try:
             # Create a local copy of model to avoid scoping issues
@@ -202,16 +205,49 @@ def process_message(
             completion = response
             break
         except Exception as e:
-            print(f"Error on attempt {retry + 1}: {e}")
-            retry += 1
-            import time  # Local import to ensure availability in threading context
+            last_error = e
+            error_msg = str(e)
 
-            time.sleep(1.5)
+            # Handle specific error types
+            if "OPENAI_API_KEY" in error_msg:
+                print(f"[OAI] Authentication error: OPENAI_API_KEY is missing or invalid")
+                break  # No point retrying auth errors
+            elif "rate limit" in error_msg.lower() or "rate_limit" in error_msg.lower():
+                wait_time = min(2**retry, 30)  # Exponential backoff, max 30s
+                print(f"[OAI] Rate limit hit on attempt {retry + 1}/{max_retries}. Waiting {wait_time}s...")
+            elif "Code interpreter tool cannot be used" in error_msg and not code_interpreter_disabled:
+                print(f"[OAI] Code interpreter disabled for this organization. Removing from tools...")
+                # Remove code interpreter from tools and retry
+                if formatted_tools:
+                    formatted_tools = [t for t in formatted_tools if t.get("type") != "code_interpreter"]
+                    params["tools"] = formatted_tools if formatted_tools else None
+                code_interpreter_disabled = True
+                retry -= 1  # Don't count this as a retry
+            elif "model" in error_msg.lower() and (
+                "not found" in error_msg.lower() or "does not exist" in error_msg.lower()
+            ):
+                print(f"[OAI] Model '{model}' not found or not accessible")
+                break  # No point retrying invalid model
+            elif "invalid_request_error" in error_msg:
+                print(f"[OAI] Invalid request on attempt {retry + 1}/{max_retries}: {error_msg}")
+                if retry >= 2:  # After a few attempts, stop retrying invalid requests
+                    break
+            else:
+                print(f"[OAI] Error on attempt {retry + 1}/{max_retries}: {error_msg}")
+
+            retry += 1
+            if retry < max_retries:
+                import time
+
+                wait_time = min(2 ** (retry - 1), 10) if "rate limit" in error_msg.lower() else 1.5
+                time.sleep(wait_time)
 
     if completion is None:
-        # If we failed all retries, return empty response instead of raising exception
-        print(f"Failed to get completion after {max_retries} retries, returning empty response")
-        return AgentResponse(text="", code=[], citations=[], function_calls=[])
+        error_details = f" Last error: {last_error}" if last_error else ""
+        print(f"[OAI] Failed after {retry} attempts.{error_details}")
+        # Return a more informative error response
+        error_text = f"OpenAI API failed: {last_error}" if last_error else "OpenAI API failed after all retries"
+        return AgentResponse(text=error_text, code=[], citations=[], function_calls=[])
 
     # Handle Responses API response (same for all models)
     if stream and stream_callback:

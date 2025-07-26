@@ -1,5 +1,11 @@
 # Canopy Benchmarking Suite
 
+⚠️ **SECURITY WARNING** ⚠️
+
+The benchmarks in this directory execute AI-generated Python code using `exec()` for evaluation purposes. This is **ONLY SAFE** in isolated sandbox environments. **DO NOT** run these benchmarks on production systems or with untrusted inputs. The AI models generate arbitrary Python code that is executed dynamically for benchmark evaluation.
+
+## About
+
 This directory contains Canopy's comprehensive benchmarking framework for evaluating multi-agent algorithm performance.
 
 ## 📁 Structure

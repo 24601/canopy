@@ -75,7 +75,7 @@ def create_config_from_models(
         agent_type = get_agent_type_from_model(model)
         model_config = ModelConfig(
             model=model,
-            tools=["live_search", "code_execution"],  # Default tools
+            tools=["live_search"],  # Default tools - removed code_execution due to Zero Data Retention
             max_retries=10,
             max_rounds=10,
             temperature=None,

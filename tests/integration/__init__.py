@@ -1,1 +1,1 @@
-"""Integration tests for MassGen."""
+"""Integration tests for Canopy."""

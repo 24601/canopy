@@ -8,8 +8,8 @@ Screen {
 
 /* Main layout containers */
 #main-layout {
-    height: 100vh;
-    width: 100vw;
+    height: 1fr;
+    width: 100%;
     background: #000000;
     color: #ffffff;
 }
@@ -180,12 +180,22 @@ Screen {
     color: #ffffff;
 }
 
+/* Fixed bottom controls container */
+.fixed-bottom-controls {
+    dock: bottom;
+    height: 6;
+    background: #404040;
+    border-top: solid #00ffff;
+    margin: 0;
+    padding: 1;
+}
+
 /* Controls - BRIGHT BORDERS */
 #controls {
     height: 5;
     align: center middle;
     background: #404040;
-    border-top: solid #00ffff;
+    border: none;
     color: #ffffff;
 }
 
@@ -198,7 +208,7 @@ Screen {
 Button {
     margin: 0 1;
     height: 3;
-    min-width: 12;
+    min-width: 10;
     color: #ffffff;
     background: #606060;
     border: solid #a0a0a0;

@@ -5,63 +5,48 @@ import random
 # Model mappings and constants
 MODEL_MAPPINGS = {
     "openai": [
-        # GPT-4.1 variants (2025 latest flagship)
-        "gpt-4.1",
-        "gpt-4.1-mini",
-        "gpt-4.1-nano",
+        # GPT-4 variants
+        "gpt-4",
+        "gpt-4-turbo",
         # GPT-4o variants
         "gpt-4o-mini",
         "gpt-4o",
         # o1 series
         "o1",  # -> o1-2024-12-17
-        # o3 series (2025 reasoning models)
-        "o3",
-        "o3-low",
-        "o3-medium",
-        "o3-high",
-        # o3 mini
-        "o3-mini",
-        "o3-mini-low",
-        "o3-mini-medium",
-        "o3-mini-high",
-        # o4 mini (2025 latest reasoning)
-        "o4-mini",
-        "o4-mini-low",
-        "o4-mini-medium",
-        "o4-mini-high",
+        # Note: Future models like o3, o4, gpt-4.1 are speculative
+        # Uncomment when officially available:
+        # "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano",
+        # "o3", "o3-low", "o3-medium", "o3-high",
+        # "o3-mini", "o3-mini-low", "o3-mini-medium", "o3-mini-high",
+        # "o4-mini", "o4-mini-low", "o4-mini-medium", "o4-mini-high",
     ],
     "gemini": [
-        # Gemini 2.5 family (2025 latest with thinking)
-        "gemini-2.5-pro",
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite",
-        "gemini-2.5-pro-deep-think",
+        # Gemini 1.5 family (current latest)
+        "gemini-1.5-pro",
+        "gemini-1.5-flash",
+        # Note: Gemini 2.5 models are speculative/future releases
+        # Uncomment when officially available:
+        # "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro-deep-think",
     ],
     "grok": [
-        # Grok 4 (2025 July latest with tool use)
-        "grok-4",
-        "grok-4-heavy",
-        # Grok 3 (2025 February)
-        "grok-3",
-        "grok-3-mini",
+        # Current Grok models (as of Jan 2025)
+        "grok-beta",
+        # Note: Grok 3 and 4 models are speculative/future releases
+        # Uncomment when officially available:
+        # "grok-3", "grok-3-mini", "grok-4", "grok-4-heavy",
     ],
     "anthropic": [
-        # Claude 4 variants (2025 latest May release)
-        "claude-opus-4",
-        "claude-sonnet-4",
-        "claude-4-opus",
-        "claude-4-sonnet",
-        "claude-4",
-        # Claude 3.7 variants
-        "claude-3.7-sonnet",
-        "claude-3.7-opus",
-        # Claude 3.5 variants
+        # Claude 3.5 variants (current latest)
         "claude-3.5-sonnet",
         "claude-3.5-sonnet-20241022",
         # Claude 3 variants
         "claude-3-opus",
         "claude-3-sonnet",
         "claude-3-haiku",
+        # Note: Claude 4 and 3.7 models are speculative/future releases
+        # Uncomment when officially available:
+        # "claude-4", "claude-4-opus", "claude-4-sonnet", "claude-opus-4", "claude-sonnet-4",
+        # "claude-3.7-sonnet", "claude-3.7-opus",
     ],
 }
 

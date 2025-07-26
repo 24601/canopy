@@ -9,6 +9,7 @@ Provides real-time multi-region display for Canopy agents with:
 
 import os
 import re
+import subprocess
 import sys
 import threading
 import time
@@ -279,6 +280,7 @@ class MultiRegionDisplay:
         """
         # Ensure all content parts are exactly the right width
         validated_parts = []
+        assert self._display_cache is not None  # Should be set by _calculate_layout
         for part in content_parts:
             if self._get_display_width(part) != self._display_cache["col_width"]:
                 # Re-pad if width is incorrect
@@ -354,9 +356,10 @@ class MultiRegionDisplay:
             sys.stdout.write("\033[H")  # Move cursor to home position
             sys.stdout.flush()  # Ensure immediate execution
         except Exception:
-            # Fallback to os.system if ANSI sequences fail
+            # Fallback to subprocess if ANSI sequences fail
             try:
-                os.system("clear" if os.name == "posix" else "cls")
+                cmd = "clear" if os.name == "posix" else "cls"
+                subprocess.run([cmd], shell=False, check=False, timeout=5)
             except Exception:
                 pass  # Silent fallback if all clearing methods fail
 
@@ -413,12 +416,14 @@ class MultiRegionDisplay:
             if agent_id not in self.agent_outputs:
                 self.agent_outputs[agent_id] = ""
 
-            # Status emoji mapping for system messages
+            # Status emoji mapping for system messages with TreeQuest support
             status_change_emoji = {
                 "working": "🔄",
                 "voted": "✅",
                 "failed": "❌",
                 "unknown": "❓",
+                "ready": "⏳",
+                "completed": "✨",
             }
 
             # Log status change with emoji
@@ -439,7 +444,7 @@ class MultiRegionDisplay:
         with self._lock:
             self.vote_distribution = vote_dist.copy()
 
-    def update_consensus_status(self, representative_id: int, vote_dist: Dict[int, int]):
+    def update_consensus_status(self, representative_id: int, vote_dist: Dict[int, int]) -> None:
         """Update when consensus is reached."""
         with self._lock:
             self.consensus_reached = True
@@ -498,7 +503,7 @@ class MultiRegionDisplay:
         os.makedirs(self.session_logs_dir, exist_ok=True)
 
         # Initialize log file paths with simple names
-        self.agent_log_files = {}
+        self.agent_log_files: Dict[int, str] = {}
         self.system_log_file = os.path.join(self.session_logs_dir, "system.txt")
 
         # Initialize system log file
@@ -550,7 +555,7 @@ class MultiRegionDisplay:
 
         return self.system_log_file
 
-    def _write_agent_log(self, agent_id: int, content: str):
+    def _write_agent_log(self, agent_id: int, content: str) -> None:
         """Write content to the agent's log file."""
         if not self.save_logs:
             return
@@ -563,7 +568,7 @@ class MultiRegionDisplay:
         except Exception as e:
             print(f"Error writing to agent {agent_id} log: {e}")
 
-    def _write_system_log(self, message: str):
+    def _write_system_log(self, message: str) -> None:
         """Write a system message to the system log file."""
         if not self.save_logs:
             return
@@ -576,7 +581,7 @@ class MultiRegionDisplay:
         except Exception as e:
             print(f"Error writing to system log: {e}")
 
-    def stream_output_sync(self, agent_id: int, content: str):
+    def stream_output_sync(self, agent_id: int, content: str) -> None:
         """FIXED: Buffered streaming with debounced display updates."""
         if not self.display_enabled:
             return
@@ -611,7 +616,7 @@ class MultiRegionDisplay:
             if display_content:
                 self._schedule_display_update()
 
-    def _handle_terminal_resize(self):
+    def _handle_terminal_resize(self) -> bool:
         """Handle terminal resize by resetting cached dimensions."""
         try:
             current_width = os.get_terminal_size().columns
@@ -625,7 +630,7 @@ class MultiRegionDisplay:
             return True
         return False
 
-    def add_system_message(self, message: str):
+    def add_system_message(self, message: str) -> None:
         """Add a system message with timestamp."""
         with self._lock:
             timestamp = datetime.now().strftime("%H:%M:%S")
@@ -639,7 +644,7 @@ class MultiRegionDisplay:
             # Write to system log
             self._write_system_log(formatted_message + "\n")
 
-    def format_agent_notification(self, agent_id: int, notification_type: str, content: str):
+    def format_agent_notification(self, agent_id: int, notification_type: str, content: str) -> None:
         """Format agent notifications for display."""
         notification_emoji = {
             "update": "📢",
@@ -652,7 +657,7 @@ class MultiRegionDisplay:
         notification_msg = f"{emoji} Agent {agent_id} received {notification_type} notification"
         self.add_system_message(notification_msg)
 
-    def _update_display_immediate(self):
+    def _update_display_immediate(self) -> None:
         """Immediate display update - called by the debounced scheduler."""
         if not self.display_enabled:
             return
@@ -741,12 +746,14 @@ class MultiRegionDisplay:
             model_name = self.agent_models.get(agent_id, "")
             status = self.agent_statuses.get(agent_id, "unknown")
 
-            # Status configuration
+            # Status configuration with TreeQuest support
             status_config = {
                 "working": {"emoji": "🔄", "color": BRIGHT_YELLOW},
                 "voted": {"emoji": "✅", "color": BRIGHT_GREEN},
                 "failed": {"emoji": "❌", "color": BRIGHT_RED},
                 "unknown": {"emoji": "❓", "color": BRIGHT_WHITE},
+                "ready": {"emoji": "⏳", "color": BRIGHT_CYAN},
+                "completed": {"emoji": "✨", "color": BRIGHT_GREEN},
             }
 
             config = status_config.get(status, status_config["unknown"])
@@ -874,9 +881,8 @@ class MultiRegionDisplay:
                 print(content_line)
             except Exception as e:
                 # Fallback: print content without borders to maintain functionality
-                simple_line = " | ".join(content_parts)[: total_width - 4] + " " * max(
-                    0, total_width - 4 - len(simple_line)
-                )
+                simple_content = " | ".join(content_parts)[: total_width - 4]
+                simple_line = simple_content + " " * max(0, total_width - 4 - len(simple_content))
                 print(f"│ {simple_line} │")
 
         # System status section with exact width
@@ -884,7 +890,16 @@ class MultiRegionDisplay:
             print(f"\n{border_line}")
 
             # System state header
-            phase_color = BRIGHT_YELLOW if self.current_phase == "collaboration" else BRIGHT_GREEN
+            # Enhanced phase color logic for TreeQuest
+            if self.current_phase == "collaboration":
+                phase_color = BRIGHT_YELLOW
+            elif self.current_phase == "tree_search":
+                phase_color = BRIGHT_CYAN
+            elif self.current_phase == "synthesis_complete":
+                phase_color = BRIGHT_MAGENTA
+            else:
+                phase_color = BRIGHT_GREEN
+
             consensus_color = BRIGHT_GREEN if self.consensus_reached else BRIGHT_RED
             consensus_text = "✅ YES" if self.consensus_reached else "❌ NO"
 
@@ -991,7 +1006,7 @@ class MultiRegionDisplay:
         # Force output to be written immediately
         sys.stdout.flush()
 
-    def force_update_display(self):
+    def force_update_display(self) -> None:
         """Force an immediate display update (for status changes)."""
         with self._lock:
             if self._update_timer:
@@ -1012,7 +1027,7 @@ class StreamingOrchestrator:
         self.display = MultiRegionDisplay(display_enabled, max_lines, save_logs, answers_dir)
         self.stream_callback = stream_callback
 
-    def stream_output(self, agent_id: int, content: str):
+    def stream_output(self, agent_id: int, content: str) -> None:
         """Streaming content - uses debounced updates."""
         self.display.stream_output_sync(agent_id, content)
         if self.stream_callback:
@@ -1021,72 +1036,72 @@ class StreamingOrchestrator:
             except Exception:
                 pass
 
-    def set_agent_model(self, agent_id: int, model_name: str):
+    def set_agent_model(self, agent_id: int, model_name: str) -> None:
         """Set agent model - immediate update."""
         self.display.set_agent_model(agent_id, model_name)
         self.display.force_update_display()
 
-    def update_agent_status(self, agent_id: int, status: str):
+    def update_agent_status(self, agent_id: int, status: str) -> None:
         """Update agent status - immediate update for critical state changes."""
         self.display.update_agent_status(agent_id, status)
         self.display.force_update_display()
 
-    def update_phase(self, old_phase: str, new_phase: str):
+    def update_phase(self, old_phase: str, new_phase: str) -> None:
         """Update phase - immediate update for critical state changes."""
         self.display.update_phase(old_phase, new_phase)
         self.display.force_update_display()
 
-    def update_vote_distribution(self, vote_dist: Dict[int, int]):
+    def update_vote_distribution(self, vote_dist: Dict[int, int]) -> None:
         """Update vote distribution - immediate update for critical state changes."""
         self.display.update_vote_distribution(vote_dist)
         self.display.force_update_display()
 
-    def update_consensus_status(self, representative_id: int, vote_dist: Dict[int, int]):
+    def update_consensus_status(self, representative_id: int, vote_dist: Dict[int, int]) -> None:
         """Update consensus status - immediate update for critical state changes."""
         self.display.update_consensus_status(representative_id, vote_dist)
         self.display.force_update_display()
 
-    def reset_consensus(self):
+    def reset_consensus(self) -> None:
         """Reset consensus - immediate update for critical state changes."""
         self.display.reset_consensus()
         self.display.force_update_display()
 
-    def add_system_message(self, message: str):
+    def add_system_message(self, message: str) -> None:
         """Add system message - immediate update for important messages."""
         self.display.add_system_message(message)
         self.display.force_update_display()
 
-    def update_agent_vote_target(self, agent_id: int, target_id: Optional[int]):
+    def update_agent_vote_target(self, agent_id: int, target_id: Optional[int]) -> None:
         """Update agent vote target - immediate update for critical state changes."""
         self.display.update_agent_vote_target(agent_id, target_id)
         self.display.force_update_display()
 
-    def update_agent_chat_round(self, agent_id: int, round_num: int):
+    def update_agent_chat_round(self, agent_id: int, round_num: int) -> None:
         """Update agent chat round - debounced update."""
         self.display.update_agent_chat_round(agent_id, round_num)
         # Don't force immediate update for chat rounds
 
-    def update_agent_update_count(self, agent_id: int, count: int):
+    def update_agent_update_count(self, agent_id: int, count: int) -> None:
         """Update agent update count - debounced update."""
         self.display.update_agent_update_count(agent_id, count)
         # Don't force immediate update for update counts
 
-    def update_agent_votes_cast(self, agent_id: int, votes_cast: int):
+    def update_agent_votes_cast(self, agent_id: int, votes_cast: int) -> None:
         """Update agent votes cast - immediate update for vote-related changes."""
         self.display.update_agent_votes_cast(agent_id, votes_cast)
         self.display.force_update_display()
 
-    def update_debate_rounds(self, rounds: int):
+    def update_debate_rounds(self, rounds: int) -> None:
         """Update debate rounds - immediate update for critical state changes."""
         self.display.update_debate_rounds(rounds)
         self.display.force_update_display()
 
-    def update_algorithm_name(self, algorithm_name: str):
+    def update_algorithm_name(self, algorithm_name: str) -> None:
         """Update algorithm name - immediate update for critical state changes."""
         self.display.update_algorithm_name(algorithm_name)
         self.display.force_update_display()
 
-    def format_agent_notification(self, agent_id: int, notification_type: str, content: str):
+    def format_agent_notification(self, agent_id: int, notification_type: str, content: str) -> None:
         """Format agent notifications - immediate update for notifications."""
         self.display.format_agent_notification(agent_id, notification_type, content)
         self.display.force_update_display()
@@ -1103,7 +1118,7 @@ class StreamingOrchestrator:
         """Get the system log file path."""
         return self.display.get_system_log_path_for_display()
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up resources when orchestrator is no longer needed."""
         self.display.cleanup()
 

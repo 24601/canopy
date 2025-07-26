@@ -1,0 +1,45 @@
+orchestrator:
+  max_duration: 300
+  consensus_threshold: 0.0
+  algorithm: treequest
+  algorithm_config:
+    max_iterations: 5
+    max_depth: 3
+    branching_factor: 2
+
+agents:
+  - agent_id: 1
+    agent_type: "openai"
+    model_config:
+      model: "gpt-4.1"
+      tools: ["live_search"]
+      max_retries: 10
+      max_rounds: 10
+      max_tokens: 1000
+      temperature: 0.7
+      top_p: 0.9
+      inference_timeout: 120
+      stream: false
+
+  - agent_id: 2
+    agent_type: "gemini"
+    model_config:
+      model: "gemini-2.5-pro"
+      tools: ["live_search"]
+      max_retries: 10
+      max_rounds: 10
+      max_tokens: 1000
+      temperature: 0.7
+      top_p: 0.9
+      inference_timeout: 120
+      stream: false
+
+streaming_display:
+  display_enabled: true
+  max_lines: 10
+  save_logs: true
+
+logging:
+  log_dir: "logs"
+  session_id: null
+  non_blocking: true

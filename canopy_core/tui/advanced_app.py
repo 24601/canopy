@@ -54,8 +54,6 @@ class AgentProgressWidget(Widget):
         super().__init__(**kwargs)
         self.agent_id = agent_id
         self.model_name = model_name
-        self._spinner = Spinner("dots", style="cyan")
-        self._console = Console()
 
     def compose(self) -> ComposeResult:
         """Compose the agent progress widget."""
@@ -268,33 +266,31 @@ class AdvancedCanopyTUI(App):
     @property
     def css(self) -> str:
         """Generate CSS with hardcoded high contrast values."""
-        # Read the CSS file which now has hardcoded high contrast values
-        css_path = Path(__file__).parent / self.CSS_PATH
-        return css_path.read_text() if css_path.exists() else ""
+        try:
+            # Read the CSS file which now has hardcoded high contrast values
+            css_path = Path(__file__).parent / self.CSS_PATH
+            if css_path.exists():
+                return css_path.read_text()
+            else:
+                self.log(f"⚠️ CSS file not found: {css_path}")
+                return ""
+        except Exception as e:
+            self.log(f"❌ Error loading CSS: {e}")
+            return ""
 
     def _setup_logging(self) -> None:
         """Configure advanced logging with TextualHandler."""
         try:
-            # Remove existing handlers
+            # Skip complex logging setup that might cause hangs
+            # Just use basic console logging for now
             root_logger = logging.getLogger()
-            for handler in root_logger.handlers[:]:
-                root_logger.removeHandler(handler)
-
-            # Add Textual handler with custom formatting
-            textual_handler = TextualHandler()
-            textual_handler.setLevel(logging.INFO)
-            formatter = logging.Formatter("%(asctime)s | %(name)s | %(levelname)s | %(message)s", datefmt="%H:%M:%S")
-            textual_handler.setFormatter(formatter)
-
-            # Configure root logger
-            root_logger.addHandler(textual_handler)
-            root_logger.setLevel(logging.INFO)
+            root_logger.setLevel(logging.WARNING)  # Reduce noise
 
             # Suppress noisy third-party loggers
-            for logger_name in ["httpx", "urllib3", "requests", "openai"]:
-                logging.getLogger(logger_name).setLevel(logging.WARNING)
+            for logger_name in ["httpx", "urllib3", "requests", "openai", "textual"]:
+                logging.getLogger(logger_name).setLevel(logging.ERROR)
 
-            self.log("✅ Advanced logging system initialized")
+            self.log("✅ Basic logging system initialized")
 
         except Exception as e:
             self.log(f"❌ Failed to setup logging: {e}")
@@ -319,7 +315,8 @@ class AdvancedCanopyTUI(App):
                     yield RichLog(id="main-log", classes="main-log", markup=True, highlight=True, max_lines=50)
                     yield VoteVisualizationWidget(id="vote-viz")
 
-            # Bottom: Control buttons
+        # Bottom: Control buttons - MOVED OUTSIDE main-layout to prevent cutoff
+        with Container(id="controls-container", classes="fixed-bottom-controls"):
             with Horizontal(id="controls", classes="controls"):
                 yield Button("⏸️ Pause", id="pause-btn", variant="primary")
                 yield Button("🔄 Refresh", id="refresh-btn", variant="default")
@@ -332,20 +329,45 @@ class AdvancedCanopyTUI(App):
         """Initialize the advanced TUI."""
         self.log("🚀 Advanced Canopy TUI starting...")
 
-        # Start system monitoring
-        self._session_timer = self.set_interval(1.0, self._update_session_metrics)
+        try:
+            # Initialize widgets carefully
+            await self._safe_widget_init()
 
-        # Start periodic refresh
-        self.set_interval(0.1, self._refresh_display)
+            # Start system monitoring with longer intervals to prevent blocking
+            self._session_timer = self.set_interval(2.0, self._update_session_metrics)
 
-        self.log("✅ TUI initialization complete")
+            # Reduce refresh frequency to prevent hangs
+            self.set_interval(1.0, self._refresh_display)
+
+            self.log("✅ TUI initialization complete")
+
+        except Exception as e:
+            self.log(f"❌ TUI initialization failed: {e}")
+
+    async def _safe_widget_init(self) -> None:
+        """Safely initialize widgets to prevent hangs."""
+        try:
+            # Try to find system status widget
+            status_widget = self.query_one("#system-status", SystemStatusWidget)
+            self.log("✅ System status widget found")
+        except Exception as e:
+            self.log(f"⚠️ System status widget not found: {e}")
+
+        try:
+            # Try to find main log
+            main_log = self.query_one("#main-log", RichLog)
+            main_log.write("🚀 TUI is ready!")
+            self.log("✅ Main log widget found")
+        except Exception as e:
+            self.log(f"⚠️ Main log widget not found: {e}")
 
     def _update_session_metrics(self) -> None:
         """Update session metrics periodically."""
         try:
             status_widget = self.query_one("#system-status", SystemStatusWidget)
             status_widget.update_duration()
-        except NoMatches:
+        except Exception:
+            # Silently handle any widget issues to prevent hangs
             pass
 
     def _refresh_display(self) -> None:
@@ -483,9 +505,7 @@ class AdvancedCanopyTUI(App):
         new_theme = "light" if current == "dark" else "dark"
         self.theme_name = new_theme
         self.theme_manager.set_theme(new_theme)
-        # Force CSS refresh by recomposing
-        self.stylesheet.clear()
-        self.stylesheet.parse(self.css)
+        # Force CSS refresh using proper Textual method
         self.refresh(recompose=True)
         self.log(f"🎨 Switched to {new_theme} theme")
 
@@ -506,3 +526,72 @@ class AdvancedCanopyTUI(App):
 
 # Export the main class
 __all__ = ["AdvancedCanopyTUI"]
+
+
+def main():
+    """Run the Advanced Canopy TUI."""
+    import asyncio
+
+    async def run_demo():
+        """Run a demo of the TUI with mock data."""
+        app = AdvancedCanopyTUI(theme="dark")
+
+        # Set up a demo task to simulate agent activity
+        async def demo_task():
+            await asyncio.sleep(1)
+            await app.log_message("🚀 Demo mode: Adding mock agents...", "info")
+
+            # Add some demo agents
+            await app.add_agent(1, "GPT-4o")
+            await app.add_agent(2, "Claude-3.5-Sonnet")
+            await app.add_agent(3, "Gemini-2.0-Pro")
+
+            await asyncio.sleep(1)
+            await app.log_message("⚡ Starting mock debate session...", "info")
+
+            # Simulate agent activity
+            for i in range(5):
+                await asyncio.sleep(2)
+                await app.update_agent_status(1, "thinking", f"Analyzing problem... step {i+1}")
+                await app.update_agent_status(2, "working", f"Generating response {i+1}")
+                await app.update_agent_status(3, "voting", f"Casting vote {i+1}")
+
+                # Mock system state updates
+                from canopy_core.types import SystemState, VoteDistribution
+
+                state = SystemState()
+                state.phase = "debate"
+                state.debate_rounds = i + 1
+                state.consensus_reached = i >= 4
+                state.vote_distribution = VoteDistribution()
+                state.vote_distribution.votes = {1: i + 1, 2: i, 3: i + 2}
+
+                await app.update_system_state(state)
+                await app.log_message(f"📊 Debate round {i+1} completed", "success")
+
+            await app.log_message("🏆 Demo completed! TUI is fully functional.", "success")
+
+        # Start the demo task
+        app.set_timer(0.5, demo_task)
+
+        await app.run_async()
+
+    try:
+        asyncio.run(run_demo())
+    except KeyboardInterrupt:
+        print("\n👋 Goodbye!")
+    except Exception as e:
+        print(f"❌ Error: {e}")
+
+
+if __name__ == "__main__":
+    try:
+        print("🚀 Starting Advanced Canopy TUI...")
+        main()
+    except KeyboardInterrupt:
+        print("\n👋 TUI stopped by user")
+    except Exception as e:
+        print(f"❌ TUI failed to start: {e}")
+        import traceback
+
+        traceback.print_exc()

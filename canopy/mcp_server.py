@@ -429,8 +429,36 @@ class InputValidator:
 
 
 def sanitize_input(text: str) -> str:
-    """Legacy function for backward compatibility - use InputValidator instead."""
-    return InputValidator.validate_question(text)
+    """Sanitize input by removing potentially dangerous patterns."""
+    if not isinstance(text, str):
+        return ""
+
+    # Handle whitespace-only input specially to preserve it
+    if text.strip() == "":
+        return text
+
+    # Remove SQL injection patterns
+    sanitized = re.sub(
+        r"(;|\s*DROP\s+TABLE|\s*DELETE\s+FROM|\s*INSERT\s+INTO|\s*UPDATE\s+)", "", text, flags=re.IGNORECASE
+    )
+
+    # Remove extended stored procedure patterns
+    sanitized = re.sub(r"(xp_\w*|sp_\w*|EXEC\s+xp_\w*|EXEC\s+sp_\w*)", "", sanitized, flags=re.IGNORECASE)
+
+    # Remove script injection patterns
+    sanitized = re.sub(r"(<script|</script>|javascript:|onclick=|onerror=)", "", sanitized, flags=re.IGNORECASE)
+
+    # Remove comment patterns
+    sanitized = re.sub(r"(--|#|/\*|\*/)", "", sanitized)
+
+    # Remove null bytes and control characters
+    sanitized = re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]", "", sanitized)
+
+    # Limit length
+    if len(sanitized) > InputValidator.MAX_QUESTION_LENGTH:
+        sanitized = sanitized[: InputValidator.MAX_QUESTION_LENGTH]
+
+    return sanitized
 
 
 async def handle_canopy_query(arguments: Dict[str, Any]) -> List[Union[TextContent, CanopyQueryOutput]]:

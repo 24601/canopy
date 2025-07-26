@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Example script demonstrating how to use the MassGen OpenAI-compatible API server.
+Example script demonstrating how to use the Canopy OpenAI-compatible API server.
 
 Prerequisites:
 1. Start the API server: python cli.py --serve
@@ -33,7 +33,7 @@ def multi_agent_chat_example(client: OpenAI) -> None:
     print("\n=== Multi-Agent Chat Completion ===")
 
     response = client.chat.completions.create(
-        model="massgen-multi",
+        model="canopy-multi",
         messages=[
             {
                 "role": "user",
@@ -95,6 +95,7 @@ def text_completion_example(client: OpenAI) -> None:
             "agent_models": ["gpt-4", "claude-3"],
             "consensus_threshold": 0.66,
         },
+        timeout=30.0,
     )
 
     if response.status_code == 200:
@@ -109,7 +110,7 @@ def treequest_example(client: OpenAI) -> None:
     print("\n=== TreeQuest Algorithm Example ===")
 
     response = client.chat.completions.create(
-        model="massgen-multi",
+        model="canopy-multi",
         messages=[
             {
                 "role": "user",
@@ -137,7 +138,7 @@ def conversation_example(client: OpenAI) -> None:
 
     # First turn
     response = client.chat.completions.create(
-        model="massgen-multi",
+        model="canopy-multi",
         messages=messages,
         extra_body={"agent_models": ["gpt-4", "claude-3"], "consensus_threshold": 0.66},
     )
@@ -151,7 +152,7 @@ def conversation_example(client: OpenAI) -> None:
 
     # Second turn
     response = client.chat.completions.create(
-        model="massgen-multi",
+        model="canopy-multi",
         messages=messages,
         extra_body={"agent_models": ["gpt-4", "claude-3"], "consensus_threshold": 0.66},
     )
@@ -166,7 +167,7 @@ def list_models_example() -> None:
 
     import requests
 
-    response = requests.get("http://localhost:8000/v1/models")
+    response = requests.get("http://localhost:8000/v1/models", timeout=10.0)
 
     if response.status_code == 200:
         models = response.json()["data"]
@@ -191,7 +192,7 @@ def error_handling_example(client: OpenAI) -> None:
     # With proper error handling
     try:
         response = client.chat.completions.create(
-            model="massgen-multi",
+            model="canopy-multi",
             messages=[{"role": "user", "content": "Explain quantum computing"}],
             extra_body={
                 "agent_models": ["gpt-4", "claude-3", "gemini-pro"],
@@ -212,7 +213,7 @@ def creative_vs_factual_example(client: OpenAI) -> None:
     # Creative task - lower consensus threshold
     print("\nCreative Task:")
     creative_response = client.chat.completions.create(
-        model="massgen-multi",
+        model="canopy-multi",
         messages=[
             {
                 "role": "user",
@@ -231,7 +232,7 @@ def creative_vs_factual_example(client: OpenAI) -> None:
     # Factual task - higher consensus threshold
     print("\nFactual Task:")
     factual_response = client.chat.completions.create(
-        model="massgen-multi",
+        model="canopy-multi",
         messages=[
             {
                 "role": "user",
@@ -260,7 +261,7 @@ def main():
     import requests
 
     try:
-        health = requests.get("http://localhost:8000/health")
+        health = requests.get("http://localhost:8000/health", timeout=5.0)
         if health.status_code != 200:
             print("❌ Error: MassGen API server is not running!")
             print("Start it with: python cli.py --serve")

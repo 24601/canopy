@@ -139,7 +139,7 @@ class LLMJudge:
 
 **Consensus Information:**
 - Consensus reached: {result.consensus_reached}
-- Number of agents: {len(result.metadata.get('agent_responses', []))}
+- Number of agents: {result.summary.get('total_agents', 0)}
 - Debate rounds: {result.algorithm_specific_data.get('debate_rounds', 0)}
 
 """

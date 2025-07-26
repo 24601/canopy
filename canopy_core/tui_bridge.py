@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 
 from .logging import get_logger
-from .tui.modern_app import ModernCanopyTUI, create_modern_canopy_tui
+from .tui.modern_app import ErrorSeverity, ModernCanopyTUI, create_modern_canopy_tui
 from .types import AgentState, SystemState, VoteDistribution
 
 logger = get_logger(__name__)
@@ -75,58 +75,126 @@ class ModernDisplayOrchestrator:
             self._start_modern_tui()
 
     def _start_modern_tui(self) -> None:
-        """Start the modern Textual TUI in the background."""
+        """Start the modern Textual TUI in the background with robust error handling."""
         try:
-            # Create the modern TUI app
+            # Validate configuration before starting
+            if not isinstance(self.theme, str):
+                logger.warning(f"Invalid theme type: {type(self.theme)}, using default")
+                self.theme = "dark"
+
+            if not isinstance(self.web_mode, bool):
+                logger.warning(f"Invalid web_mode type: {type(self.web_mode)}, using default")
+                self.web_mode = False
+
+            # Create the modern TUI app with validation
             self.tui_app = create_modern_canopy_tui(theme=self.theme, web_mode=self.web_mode)
+
+            if not self.tui_app:
+                raise RuntimeError("Failed to create TUI app instance")
 
             # Start TUI in background thread to avoid blocking
             def run_tui():
                 try:
                     # Use asyncio.run to start the TUI
                     asyncio.run(self.tui_app.run_async())
+                except KeyboardInterrupt:
+                    logger.info("TUI stopped by user")
                 except Exception as e:
-                    logger.error(f"TUI error: {e}")
+                    logger.error(f"TUI runtime error: {e}")
+                    # Try to handle error through the TUI's error handler if available
+                    if hasattr(self.tui_app, "error_handler"):
+                        asyncio.run(self.tui_app.error_handler.handle_error(e, "TUI runtime", ErrorSeverity.CRITICAL))
                 finally:
                     self.is_running = False
+                    logger.info("TUI thread terminated")
 
-            tui_thread = threading.Thread(target=run_tui, daemon=True)
+            # Create and start thread with proper error handling
+            tui_thread = threading.Thread(target=run_tui, daemon=True, name="CanopyTUI")
             tui_thread.start()
-            self.is_running = True
 
+            # Verify thread started successfully
+            import time
+
+            time.sleep(0.1)  # Brief wait to check if thread started
+            if not tui_thread.is_alive():
+                raise RuntimeError("TUI thread failed to start")
+
+            self.is_running = True
             logger.info("🚀 Modern Canopy TUI started successfully")
 
         except Exception as e:
             logger.error(f"Failed to start modern TUI: {e}")
             self.display_enabled = False
+            self.is_running = False
+
+            # Ensure tui_app is None if startup failed
+            self.tui_app = None
 
     async def stream_output(self, agent_id: int, content: str) -> None:
-        """Stream output content to the modern TUI."""
+        """Stream output content to the modern TUI with robust error handling."""
         if not self.display_enabled or not self.tui_app:
             return
 
         try:
+            # Input validation
+            if not isinstance(agent_id, int):
+                raise ValueError(f"agent_id must be int, got {type(agent_id)}")
+            if not isinstance(content, str):
+                content = str(content) if content is not None else ""
+            if not content.strip():
+                return  # Skip empty content
+
             async with self._lock:
                 # Convert agent_id to string for consistency
                 agent_str = str(agent_id)
 
                 # Update agent state if it exists
                 if agent_str in self.agent_states:
-                    state = self.agent_states[agent_str]
-                    await self.tui_app.update_agent(agent_str, state)
+                    try:
+                        state = self.agent_states[agent_str]
+                        await self.tui_app.update_agent(agent_str, state)
+                    except Exception as update_error:
+                        # Handle agent update error through TUI error handler
+                        if hasattr(self.tui_app, "error_handler"):
+                            await self.tui_app.error_handler.handle_error(
+                                update_error,
+                                f"Updating agent {agent_str} during stream",
+                                ErrorSeverity.WARNING,
+                                show_notification=False,
+                            )
+                        else:
+                            logger.warning(f"Agent update error: {update_error}")
 
                 # Log the output as an agent message
-                await self.tui_app.log_message(content, level="agent", agent_id=agent_str)
+                try:
+                    await self.tui_app.log_message(content, level="agent", agent_id=agent_str)
+                except Exception as log_error:
+                    # Fallback logging if TUI logging fails
+                    logger.warning(f"TUI logging failed, using fallback: {log_error}")
+                    logger.info(f"Agent {agent_id}: {content}")
 
                 # Call legacy callback if provided
                 if self.stream_callback:
                     try:
-                        self.stream_callback(agent_id, content)
-                    except Exception as e:
-                        logger.warning(f"Stream callback error: {e}")
+                        # Validate callback is callable
+                        if not callable(self.stream_callback):
+                            logger.error(f"Stream callback is not callable: {type(self.stream_callback)}")
+                        else:
+                            self.stream_callback(agent_id, content)
+                    except Exception as callback_error:
+                        logger.warning(f"Stream callback error: {callback_error}")
+                        # Don't let callback errors break the stream
 
         except Exception as e:
-            logger.error(f"Error streaming output: {e}")
+            logger.error(f"Error streaming output for agent {agent_id}: {e}")
+            # Try to report error through TUI error handler if available
+            if self.tui_app and hasattr(self.tui_app, "error_handler"):
+                try:
+                    await self.tui_app.error_handler.handle_error(
+                        e, f"Streaming output for agent {agent_id}", ErrorSeverity.ERROR
+                    )
+                except:
+                    pass  # Prevent recursive errors
 
     async def set_agent_model(self, agent_id: int, model_name: str) -> None:
         """Set agent model with immediate TUI update."""

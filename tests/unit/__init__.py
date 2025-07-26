@@ -1,1 +1,1 @@
-"""Unit tests for MassGen components."""
+"""Unit tests for Canopy components."""

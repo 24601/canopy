@@ -216,7 +216,7 @@ Examples:
     parser.add_argument("--list-profiles", action="store_true", help="List available algorithm profiles")
     parser.add_argument("--serve", action="store_true", help="Start OpenAI-compatible API server")
     parser.add_argument("--port", type=int, default=8000, help="API server port (default: 8000)")
-    parser.add_argument("--host", type=str, default="0.0.0.0", help="API server host (default: 0.0.0.0)")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="API server host (default: 127.0.0.1)")
 
     # Configuration options (mutually exclusive)
     config_group = parser.add_mutually_exclusive_group(required=False)
@@ -331,10 +331,10 @@ Examples:
         print(f"\n{BRIGHT_CYAN}🚀 Starting Canopy API Server{RESET}")
         print(f"{BRIGHT_YELLOW}📡 Host: {args.host}:{args.port}{RESET}")
         print(
-            f"{BRIGHT_GREEN}📚 Docs: http://{args.host if args.host != '0.0.0.0' else 'localhost'}:{args.port}/docs{RESET}"
+            f"{BRIGHT_GREEN}📚 Docs: http://{args.host if args.host not in ['0.0.0.0', '127.0.0.1'] else 'localhost'}:{args.port}/docs{RESET}"
         )
         print(
-            f"{BRIGHT_BLUE}🔗 OpenAPI: http://{args.host if args.host != '0.0.0.0' else 'localhost'}:{args.port}/openapi.json{RESET}"
+            f"{BRIGHT_BLUE}🔗 OpenAPI: http://{args.host if args.host not in ['0.0.0.0', '127.0.0.1'] else 'localhost'}:{args.port}/openapi.json{RESET}"
         )
         print(f"\n{BRIGHT_WHITE}Available endpoints:{RESET}")
         print("  • POST /v1/chat/completions    - OpenAI Chat API compatible")

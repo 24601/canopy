@@ -467,7 +467,9 @@ class CanopyAlgorithm(BaseAlgorithm):
             return False
 
         vote_counts = self._get_current_vote_counts()
-        votes_needed = max(1, int(votable_agents_count * self.consensus_threshold))
+        # For true consensus, we need MORE than threshold * votable agents
+        # This prevents ties from being considered consensus
+        votes_needed = int(votable_agents_count * self.consensus_threshold) + 1
 
         if vote_counts and vote_counts.most_common(1)[0][1] >= votes_needed:
             winning_agent_id = vote_counts.most_common(1)[0][0]

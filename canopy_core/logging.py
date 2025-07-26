@@ -146,7 +146,7 @@ class MassLogManager:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         return f"{timestamp}"
 
-    def _initialize_system_log(self):
+    def _initialize_system_log(self) -> None:
         """Initialize the system log file with header."""
         if self.non_blocking:
             return
@@ -160,7 +160,7 @@ class MassLogManager:
         except Exception as e:
             print(f"Warning: Failed to initialize system log: {e}")
 
-    def _setup_logging(self):
+    def _setup_logging(self) -> None:
         """Set up file logging configuration."""
         # Skip file logging setup in non-blocking mode
         if self.non_blocking:
@@ -237,7 +237,7 @@ class MassLogManager:
 {'=' * 80}
 """
 
-    def _write_agent_answers(self, agent_id: int, answer_records: List[AnswerRecord]):
+    def _write_agent_answers(self, agent_id: int, answer_records: List[AnswerRecord]) -> None:
         """Write agent's answer history to the answers folder."""
         if self.non_blocking:
             return
@@ -287,7 +287,7 @@ class MassLogManager:
         except Exception as e:
             print(f"Warning: Failed to write answers for agent {agent_id}: {e}")
 
-    def _write_agent_votes(self, agent_id: int, vote_records: List[VoteRecord]):
+    def _write_agent_votes(self, agent_id: int, vote_records: List[VoteRecord]) -> None:
         """Write agent's vote history to the votes folder."""
         if self.non_blocking:
             return
@@ -305,7 +305,7 @@ class MassLogManager:
 
                 if vote_records:
                     # Calculate voting statistics
-                    vote_targets = {}
+                    vote_targets: Dict[int, int] = {}
                     total_reason_chars = 0
                     for vote in vote_records:
                         vote_targets[vote.target_id] = vote_targets.get(vote.target_id, 0) + 1
@@ -354,7 +354,7 @@ class MassLogManager:
         agent_id: Optional[int] = None,
         phase: str = "unknown",
         data: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         """
         Log a general system event.
 
@@ -385,7 +385,9 @@ class MassLogManager:
             # Write to file immediately
             self._write_log_entry(entry)
 
-    def log_agent_answer_update(self, agent_id: int, answer: str, phase: str = "unknown", orchestrator=None):
+    def log_agent_answer_update(
+        self, agent_id: int, answer: str, phase: str = "unknown", orchestrator: Any = None
+    ) -> None:
         """
         Log agent answer update with detailed information and immediately save to file.
 
@@ -407,7 +409,7 @@ class MassLogManager:
             agent_state = orchestrator.agent_states[agent_id]
             self._write_agent_answers(agent_id, agent_state.updated_answers)
 
-    def log_agent_status_change(self, agent_id: int, old_status: str, new_status: str, phase: str = "unknown"):
+    def log_agent_status_change(self, agent_id: int, old_status: str, new_status: str, phase: str = "unknown") -> None:
         """
         Log agent status change.
 
@@ -427,7 +429,7 @@ class MassLogManager:
 
         # Status changes are captured in system state snapshots
 
-    def log_system_state_snapshot(self, orchestrator, phase: str = "unknown"):
+    def log_system_state_snapshot(self, orchestrator: Any, phase: str = "unknown") -> Dict[str, Any]:
         """
         Log a complete system state snapshot including all agent answers and voting status.
 
@@ -529,8 +531,8 @@ class MassLogManager:
         target_id: int,
         phase: str = "unknown",
         reason: str = "",
-        orchestrator=None,
-    ):
+        orchestrator: Any = None,
+    ) -> None:
         """
         Log a voting event with detailed information and immediately save to file.
 
@@ -564,7 +566,7 @@ class MassLogManager:
         vote_distribution: Dict[int, int],
         is_fallback: bool = False,
         phase: str = "unknown",
-    ):
+    ) -> None:
         """
         Log when consensus is reached.
 
@@ -598,7 +600,9 @@ class MassLogManager:
         for agent_id in vote_distribution.keys():
             self._write_agent_display_log(agent_id, consensus_entry)
 
-    def log_phase_transition(self, old_phase: str, new_phase: str, additional_data: Dict[str, Any] = None):
+    def log_phase_transition(
+        self, old_phase: str, new_phase: str, additional_data: Optional[Dict[str, Any]] = None
+    ) -> None:
         """
         Log system phase transitions.
 
@@ -622,7 +626,7 @@ class MassLogManager:
         notification_type: str,
         content_preview: str,
         phase: str = "unknown",
-    ):
+    ) -> None:
         """
         Log when a notification is sent to an agent.
 
@@ -654,7 +658,7 @@ class MassLogManager:
         }
         self._write_agent_display_log(agent_id, notification_entry)
 
-    def log_agent_restart(self, agent_id: int, reason: str, phase: str = "unknown"):
+    def log_agent_restart(self, agent_id: int, reason: str, phase: str = "unknown") -> None:
         """
         Log when an agent is restarted.
 
@@ -682,7 +686,7 @@ class MassLogManager:
         }
         self._write_agent_display_log(agent_id, restart_entry)
 
-    def log_debate_started(self, phase: str = "unknown"):
+    def log_debate_started(self, phase: str = "unknown") -> None:
         """
         Log when a debate phase starts.
 
@@ -696,7 +700,7 @@ class MassLogManager:
 
         self.log_event("debate_started", phase=phase, data=data)
 
-    def log_task_completion(self, final_solution: Dict[str, Any]):
+    def log_task_completion(self, final_solution: Dict[str, Any]) -> None:
         """
         Log task completion with final results.
 
@@ -707,7 +711,7 @@ class MassLogManager:
 
         self.log_event("task_completed", phase="completed", data=data)
 
-    def _write_log_entry(self, entry: LogEntry):
+    def _write_log_entry(self, entry: LogEntry) -> None:
         """Write a single log entry to the session JSONL file."""
         # Skip file operations in non-blocking mode
         if self.non_blocking:
@@ -724,7 +728,7 @@ class MassLogManager:
         except Exception as e:
             print(f"Warning: Failed to write log entry: {e}")
 
-    def _write_agent_display_log(self, agent_id: int, data: Dict[str, Any]):
+    def _write_agent_display_log(self, agent_id: int, data: Dict[str, Any]) -> None:
         """Write agent-specific display log entry."""
         # Skip file operations in non-blocking mode
         if self.non_blocking:
@@ -758,7 +762,7 @@ class MassLogManager:
         except Exception as e:
             print(f"Warning: Failed to write agent display log: {e}")
 
-    def _write_system_log(self, message: str):
+    def _write_system_log(self, message: str) -> None:
         """Write a system message to the system log file."""
         if self.non_blocking:
             return
@@ -780,8 +784,8 @@ class MassLogManager:
         """Get comprehensive session summary."""
         with self._lock:
             # Count events by type
-            event_counts = {}
-            agent_activities = {}
+            event_counts: Dict[str, int] = {}
+            agent_activities: Dict[int, List[Dict[str, Any]]] = {}
 
             for entry in self.log_entries:
                 # Count events
@@ -826,7 +830,7 @@ class MassLogManager:
         end_time = max(entry.timestamp for entry in self.log_entries)
         return end_time - start_time
 
-    def save_agent_states(self, orchestrator):
+    def save_agent_states(self, orchestrator: Any) -> None:
         """Save current agent states to answers and votes folders."""
         if self.non_blocking:
             return
@@ -841,7 +845,7 @@ class MassLogManager:
         except Exception as e:
             print(f"Warning: Failed to save agent states: {e}")
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Clean up and finalize the logging session."""
         self.log_event(
             "session_ended",
@@ -904,7 +908,7 @@ def get_log_manager() -> Optional[MassLogManager]:
     return _log_manager
 
 
-def cleanup_logging():
+def cleanup_logging() -> None:
     """Cleanup the global logging system."""
     global _log_manager
     if _log_manager:

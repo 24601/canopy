@@ -1,1 +1,1 @@
-"""Tests for MassGen algorithm extensions."""
+"""Tests for Canopy algorithm extensions."""

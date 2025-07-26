@@ -72,15 +72,18 @@ def calculator(expression: str) -> Dict[str, Any]:
     """
     Mathematical expression to evaluate (e.g., '2 + 3 * 4', 'sqrt(16)', 'sin(pi/2)')
     """
-    safe_operators: Dict[type, Callable[..., Any]] = {
+    binary_operators: Dict[type, Callable[[Any, Any], Any]] = {
         ast.Add: operator.add,
         ast.Sub: operator.sub,
         ast.Mult: operator.mul,
         ast.Div: operator.truediv,
         ast.Pow: operator.pow,
+        ast.Mod: operator.mod,
+    }
+
+    unary_operators: Dict[type, Callable[[Any], Any]] = {
         ast.USub: operator.neg,
         ast.UAdd: operator.pos,
-        ast.Mod: operator.mod,
     }
 
     # Safe functions
@@ -113,16 +116,16 @@ def calculator(expression: str) -> Dict[str, Any]:
         elif isinstance(node, ast.BinOp):  # Binary operations
             left = _safe_eval(node.left)
             right = _safe_eval(node.right)
-            if type(node.op) in safe_operators:
-                op_func = cast(Callable[[Any, Any], Any], safe_operators[type(node.op)])
-                return op_func(left, right)
+            if type(node.op) in binary_operators:
+                binary_func: Callable[[Any, Any], Any] = binary_operators[type(node.op)]
+                return binary_func(left, right)
             else:
                 raise ValueError(f"Unsupported operation: {type(node.op)}")
         elif isinstance(node, ast.UnaryOp):  # Unary operations
             operand = _safe_eval(node.operand)
-            if type(node.op) in safe_operators:
-                op_func = cast(Callable[[Any], Any], safe_operators[type(node.op)])
-                return op_func(operand)
+            if type(node.op) in unary_operators:
+                unary_func: Callable[[Any], Any] = unary_operators[type(node.op)]
+                return unary_func(operand)
             else:
                 raise ValueError(f"Unsupported unary operation: {type(node.op)}")
         elif isinstance(node, ast.Call):  # Function calls

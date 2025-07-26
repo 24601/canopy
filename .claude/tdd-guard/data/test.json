@@ -1,17 +1,87 @@
 {
   "testModules": [
     {
-      "moduleId": "tests/test_mcp_server.py",
+      "moduleId": "tests/test_mcp_security.py",
       "tests": [
         {
-          "name": "collection_error_tests/test_mcp_server.py",
-          "fullName": "tests/test_mcp_server.py",
-          "state": "failed",
-          "errors": [
-            {
-              "message": "ImportError while importing test module '/Users/basitmustafa/Documents/GitHub/canopy/tests/test_mcp_server.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n../../../.local/share/mise/installs/python/3.12.11/lib/python3.12/importlib/__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\ntests/test_mcp_server.py:22: in <module>\n    from canopy.mcp_server import (\ncanopy/__init__.py:10: in <module>\n    from canopy_core import (\ncanopy_core/__init__.py:56: in <module>\n    from .main import MassSystem, run_mass_agents, run_mass_with_config\ncanopy_core/main.py:38: in <module>\n    from .orchestrator import MassOrchestrator\ncanopy_core/orchestrator.py:10: in <module>\n    from .algorithms import AlgorithmFactory\ncanopy_core/algorithms/__init__.py:13: in <module>\n    from .massgen_algorithm import MassGenAlgorithm\nE   ModuleNotFoundError: No module named 'canopy_core.algorithms.massgen_algorithm'"
-            }
-          ]
+          "name": "test_sanitize_input_sql_injection",
+          "fullName": "tests/test_mcp_security.py::TestSecurityFeatures::test_sanitize_input_sql_injection",
+          "state": "passed"
+        },
+        {
+          "name": "test_sanitize_input_length_limit",
+          "fullName": "tests/test_mcp_security.py::TestSecurityFeatures::test_sanitize_input_length_limit",
+          "state": "passed"
+        },
+        {
+          "name": "test_sanitize_input_multiple_patterns",
+          "fullName": "tests/test_mcp_security.py::TestSecurityFeatures::test_sanitize_input_multiple_patterns",
+          "state": "passed"
+        },
+        {
+          "name": "test_sanitize_input_xp_sp_patterns",
+          "fullName": "tests/test_mcp_security.py::TestSecurityFeatures::test_sanitize_input_xp_sp_patterns",
+          "state": "passed"
+        },
+        {
+          "name": "test_sanitize_input_preserves_safe_content",
+          "fullName": "tests/test_mcp_security.py::TestSecurityFeatures::test_sanitize_input_preserves_safe_content",
+          "state": "passed"
+        },
+        {
+          "name": "test_sanitize_empty_input",
+          "fullName": "tests/test_mcp_security.py::TestSecurityFeatures::test_sanitize_empty_input",
+          "state": "passed"
+        },
+        {
+          "name": "test_canopy_query_output_schema",
+          "fullName": "tests/test_mcp_security.py::TestStructuredOutput::test_canopy_query_output_schema",
+          "state": "passed"
+        },
+        {
+          "name": "test_canopy_query_output_validation",
+          "fullName": "tests/test_mcp_security.py::TestStructuredOutput::test_canopy_query_output_validation",
+          "state": "passed"
+        },
+        {
+          "name": "test_analysis_result_schema",
+          "fullName": "tests/test_mcp_security.py::TestStructuredOutput::test_analysis_result_schema",
+          "state": "passed"
+        },
+        {
+          "name": "test_analysis_result_complex_data",
+          "fullName": "tests/test_mcp_security.py::TestStructuredOutput::test_analysis_result_complex_data",
+          "state": "passed"
+        },
+        {
+          "name": "test_schema_validation_errors",
+          "fullName": "tests/test_mcp_security.py::TestStructuredOutput::test_schema_validation_errors",
+          "state": "passed"
+        },
+        {
+          "name": "test_json_serialization",
+          "fullName": "tests/test_mcp_security.py::TestStructuredOutput::test_json_serialization",
+          "state": "passed"
+        },
+        {
+          "name": "test_field_descriptions",
+          "fullName": "tests/test_mcp_security.py::TestStructuredOutput::test_field_descriptions",
+          "state": "passed"
+        },
+        {
+          "name": "test_sanitize_unicode_input",
+          "fullName": "tests/test_mcp_security.py::TestEdgeCases::test_sanitize_unicode_input",
+          "state": "passed"
+        },
+        {
+          "name": "test_canopy_output_edge_values",
+          "fullName": "tests/test_mcp_security.py::TestEdgeCases::test_canopy_output_edge_values",
+          "state": "passed"
+        },
+        {
+          "name": "test_analysis_result_empty_collections",
+          "fullName": "tests/test_mcp_security.py::TestEdgeCases::test_analysis_result_empty_collections",
+          "state": "passed"
         }
       ]
     }

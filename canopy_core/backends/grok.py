@@ -214,21 +214,46 @@ def process_message(
 
     completion = None
     retry = 0
+    last_error = None
+
     while retry < max_retries:
         try:
             is_streaming = stream and stream_callback is not None
             completion = make_grok_request(stream=is_streaming)
             break
         except Exception as e:
-            print(f"Error on attempt {retry + 1}: {e}")
-            retry += 1
-            import time  # Local import to ensure availability in threading context
+            last_error = e
+            error_msg = str(e)
 
-            time.sleep(1.5)
+            # Log specific error types with helpful messages
+            if "XAI_API_KEY" in error_msg:
+                print(f"[GROK] Authentication error: XAI_API_KEY is missing or invalid")
+                break  # No point retrying auth errors
+            elif "RESOURCE_EXHAUSTED" in error_msg or "credits" in error_msg or "spending limit" in error_msg:
+                print(f"[GROK] Quota/credits exhausted: {error_msg}")
+                break  # No point retrying quota errors
+            elif "rate limit" in error_msg.lower():
+                wait_time = min(2**retry, 10)  # Exponential backoff, max 10s
+                print(f"[GROK] Rate limit hit on attempt {retry + 1}/{max_retries}. Waiting {wait_time}s...")
+            elif "model" in error_msg.lower() and "not found" in error_msg.lower():
+                print(f"[GROK] Model '{model}' not found or not accessible")
+                break  # No point retrying invalid model
+            else:
+                print(f"[GROK] Error on attempt {retry + 1}/{max_retries}: {error_msg}")
+
+            retry += 1
+            if retry < max_retries:
+                import time
+
+                wait_time = min(2 ** (retry - 1), 10) if "rate limit" in error_msg.lower() else 1.5
+                time.sleep(wait_time)
 
     if completion is None:
-        print(f"Failed to get completion after {max_retries} retries, returning empty response")
-        return AgentResponse(text="", code=[], citations=[], function_calls=[])
+        error_details = f" Last error: {last_error}" if last_error else ""
+        print(f"[GROK] Failed after {retry} attempts.{error_details}")
+        # Return a more informative error response
+        error_text = f"Grok API failed: {last_error}" if last_error else "Grok API failed after all retries"
+        return AgentResponse(text=error_text, code=[], citations=[], function_calls=[])
 
     if stream and stream_callback is not None:
         text = ""
