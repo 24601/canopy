@@ -7,7 +7,7 @@ import sys
 from typing import Any, Dict, Optional
 
 # Global tool registry
-register_tool = {}
+register_tool: Dict[str, Any] = {}
 
 # Mock functions removed - actual functionality is implemented in agent classes
 
@@ -29,6 +29,8 @@ def python_interpreter(code: str, timeout: Optional[int] = 10) -> Dict[str, Any]
         - 'error': Error message if execution failed
     """
     # Ensure timeout is between 0 and 60 seconds
+    if timeout is None:
+        timeout = 10
     timeout = max(min(timeout, 60), 0)
     try:
         # Run the code in a separate Python process
@@ -39,40 +41,34 @@ def python_interpreter(code: str, timeout: Optional[int] = 10) -> Dict[str, Any]
             timeout=timeout,
         )
 
-        return json.dumps(
-            {
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "returncode": result.returncode,
-                "success": result.returncode == 0,
-                "error": None,
-            }
-        )
+        return {
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "returncode": result.returncode,
+            "success": result.returncode == 0,
+            "error": None,
+        }
 
     except subprocess.TimeoutExpired:
-        return json.dumps(
-            {
-                "stdout": "",
-                "stderr": "",
-                "returncode": -1,
-                "success": False,
-                "error": f"Code execution timed out after {timeout} seconds",
-            }
-        )
+        return {
+            "stdout": "",
+            "stderr": "",
+            "returncode": -1,
+            "success": False,
+            "error": f"Code execution timed out after {timeout} seconds",
+        }
 
     except Exception as e:
-        return json.dumps(
-            {
-                "stdout": "",
-                "stderr": "",
-                "returncode": -1,
-                "success": False,
-                "error": f"Failed to execute code: {str(e)}",
-            }
-        )
+        return {
+            "stdout": "",
+            "stderr": "",
+            "returncode": -1,
+            "success": False,
+            "error": f"Failed to execute code: {str(e)}",
+        }
 
 
-def calculator(expression: str) -> float:
+def calculator(expression: str) -> Dict[str, Any]:
     """
     Mathematical expression to evaluate (e.g., '2 + 3 * 4', 'sqrt(16)', 'sin(pi/2)')
     """
@@ -105,7 +101,7 @@ def calculator(expression: str) -> float:
         "e": math.e,
     }
 
-    def _safe_eval(node):
+    def _safe_eval(node: ast.AST) -> Any:
         """Safely evaluate an AST node"""
         if isinstance(node, ast.Constant):  # Numbers
             return node.value

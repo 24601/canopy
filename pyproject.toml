@@ -158,41 +158,6 @@ ignore_errors = true
 module = "future_mass.*"
 ignore_errors = true
 
-[[tool.mypy.overrides]]
-module = "canopy_core.orchestrator"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "canopy_core.agent"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "canopy_core.agents"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "canopy_core.backends.*"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "canopy_core.main"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "canopy_core.streaming_display"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "canopy_core.tools"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "canopy_core.utils"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "canopy_core.logging"
-ignore_errors = true
 
 # pytest configuration
 [tool.pytest.ini_options]
@@ -250,7 +215,7 @@ ignore-nested-functions = false
 ignore-nested-classes = true
 ignore-setters = false
 fail-under = 80
-exclude = ["setup.py", "docs", "build", "tests", "canopy_core/orchestrator.py", "canopy_core/agent.py", "canopy_core/agents.py", "canopy_core/backends", "canopy_core/main.py", "canopy_core/streaming_display.py", "canopy_core/tools.py", "canopy_core/utils.py", "canopy_core/logging.py"]
+exclude = ["setup.py", "docs", "build", "tests"]
 ignore-regex = ["^get$", "^mock_.*", ".*BaseClass.*"]
 verbose = 2
 quiet = false

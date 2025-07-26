@@ -18,7 +18,9 @@ def run_command(cmd: List[str]) -> Tuple[int, str, str]:
 def run_black_fix() -> bool:
     """Run black formatter to fix style issues."""
     print("🔧 Running black formatter...")
-    code, stdout, stderr = run_command(["black", "massgen", "tests", "--exclude", "future_mass"])
+    code, stdout, stderr = run_command(
+        ["black", "massgen", "tests", "--exclude", "future_mass"]
+    )
     if code == 0:
         print("✅ Black formatting complete")
         return True
@@ -30,7 +32,9 @@ def run_black_fix() -> bool:
 def run_isort_fix() -> bool:
     """Run isort to fix import ordering."""
     print("🔧 Running isort...")
-    code, stdout, stderr = run_command(["isort", "massgen", "tests", "--skip", "future_mass"])
+    code, stdout, stderr = run_command(
+        ["isort", "massgen", "tests", "--skip", "future_mass"]
+    )
     if code == 0:
         print("✅ Import sorting complete")
         return True
@@ -55,7 +59,9 @@ def run_flake8_check() -> Tuple[bool, List[str]]:
 def run_mypy_check() -> Tuple[bool, List[str]]:
     """Run mypy type checking."""
     print("🔍 Running mypy type check...")
-    code, stdout, stderr = run_command(["mypy", "massgen", "--config-file", "pyproject.toml"])
+    code, stdout, stderr = run_command(
+        ["mypy", "massgen", "--config-file", "pyproject.toml"]
+    )
     if code == 0:
         print("✅ Type checking passed")
         return True, []
@@ -65,7 +71,7 @@ def run_mypy_check() -> Tuple[bool, List[str]]:
         return False, errors
 
 
-def main() -> None:
+def main() -> int:
     """Main hook function with auto-fix attempts."""
     print("\n🚀 Starting lint and type check hook...\n")
 
@@ -77,8 +83,8 @@ def main() -> None:
         print(f"\n📍 Iteration {iteration}/{max_iterations}")
 
         # Run auto-fixers first
-        black_success = run_black_fix()
-        isort_success = run_isort_fix()
+        run_black_fix()
+        run_isort_fix()
 
         # Check for remaining issues
         flake8_success, flake8_errors = run_flake8_check()

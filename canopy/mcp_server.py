@@ -15,15 +15,13 @@ import asyncio
 import json
 import logging
 import os
-import uuid
-from datetime import datetime
+import re
 from typing import Any, Dict, List, Optional, Union
 
 from mcp import Resource, Tool, server
 from mcp.server.models import InitializationOptions
 from mcp.server.stdio import stdio_server
 from mcp.types import (
-    EmbeddedResource,
     GetPromptResult,
     ImageContent,
     ListResourcesResult,
@@ -33,11 +31,10 @@ from mcp.types import (
     PromptMessage,
     TextContent,
 )
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 from canopy_core.config import create_config_from_models, load_config_from_yaml
 from canopy_core.main import run_mass_with_config
-from canopy_core.types import MassConfig
 
 logger = logging.getLogger(__name__)
 
@@ -51,8 +48,12 @@ class CanopyQueryOutput(BaseModel):
 
     answer: str = Field(..., description="The consensus answer from multiple agents")
     consensus_reached: bool = Field(..., description="Whether agents reached consensus")
-    confidence: float = Field(..., description="Confidence score (0.0-1.0)", ge=0.0, le=1.0)
-    representative_agent: Optional[str] = Field(None, description="ID of the representative agent")
+    confidence: float = Field(
+        ..., description="Confidence score (0.0-1.0)", ge=0.0, le=1.0
+    )
+    representative_agent: Optional[str] = Field(
+        None, description="ID of the representative agent"
+    )
     debate_rounds: int = Field(0, description="Number of debate rounds")
     execution_time_ms: int = Field(..., description="Execution time in milliseconds")
 
@@ -63,7 +64,9 @@ class AnalysisResult(BaseModel):
     analysis_type: str = Field(..., description="Type of analysis performed")
     results: Dict[str, Any] = Field(..., description="Analysis results")
     summary: str = Field(..., description="Summary of findings")
-    recommendations: List[str] = Field(default_factory=list, description="Recommendations based on analysis")
+    recommendations: List[str] = Field(
+        default_factory=list, description="Recommendations based on analysis"
+    )
 
 
 @app.list_resources()
@@ -322,7 +325,12 @@ async def list_tools() -> ListToolsResult:
                     },
                     "analysis_type": {
                         "type": "string",
-                        "enum": ["compare_algorithms", "compare_models", "sensitivity_analysis", "security_analysis"],
+                        "enum": [
+                            "compare_algorithms",
+                            "compare_models",
+                            "sensitivity_analysis",
+                            "security_analysis",
+                        ],
                         "description": "Type of analysis to perform",
                         "default": "compare_algorithms",
                     },
@@ -348,14 +356,325 @@ async def list_tools() -> ListToolsResult:
     return ListToolsResult(tools=all_tools)
 
 
+class InputValidator:
+    """Enhanced input validation for security."""
+    
+    # Maximum input lengths by type
+    MAX_QUESTION_LENGTH = 10000
+    MAX_CONFIG_PATH_LENGTH = 500
+    
+    # Compiled regex patterns for performance - focus on actual injection patterns
+    SQL_INJECTION_PATTERN = re.compile(
+        r"(?i)(;.*\b(DROP|DELETE|INSERT|UPDATE|ALTER)\b|--.*$|\*/|\/\*|(UNION.*SELECT)|(OR\s+1\s*=\s*1)|(AND\s+1\s*=\s*1)|(\'\s*;\s*)|(\'\s*OR\s+))",
+        re.IGNORECASE | re.MULTILINE
+    )
+    
+    SCRIPT_INJECTION_PATTERN = re.compile(
+        r"(<script[\s\S]*?>[\s\S]*?</script>|javascript:|on\w+\s*=)",
+        re.IGNORECASE
+    )
+    
+    PATH_TRAVERSAL_PATTERN = re.compile(r"(\.\.\/|\.\.\\|%2e%2e%2f|%2e%2e%5c)", re.IGNORECASE)
+    
+    COMMAND_INJECTION_PATTERN = re.compile(
+        r"(\||;|&|`|\$\(|\${|<|>|>>|\\\n|\r\n?)",
+        re.MULTILINE
+    )
+
+    @staticmethod
+    def validate_question(text: str) -> str:
+        """Validate and sanitize question input."""
+        if not isinstance(text, str):
+            raise ValueError("Question must be a string")
+        
+        if len(text) > InputValidator.MAX_QUESTION_LENGTH:
+            raise ValueError(f"Question too long (max {InputValidator.MAX_QUESTION_LENGTH} chars)")
+        
+        if len(text.strip()) == 0:
+            raise ValueError("Question cannot be empty")
+        
+        # Check for injection patterns
+        if InputValidator.SQL_INJECTION_PATTERN.search(text):
+            raise ValueError("Potentially malicious SQL pattern detected")
+        
+        if InputValidator.SCRIPT_INJECTION_PATTERN.search(text):
+            raise ValueError("Potentially malicious script pattern detected")
+        
+        if InputValidator.COMMAND_INJECTION_PATTERN.search(text):
+            raise ValueError("Potentially malicious command pattern detected")
+        
+        # Remove any null bytes and control characters except normal whitespace
+        sanitized = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', text)
+        
+        return sanitized.strip()
+
+    @staticmethod  
+    def validate_config_path(path: str) -> str:
+        """Validate configuration file path."""
+        if not isinstance(path, str):
+            raise ValueError("Config path must be a string")
+        
+        if len(path) > InputValidator.MAX_CONFIG_PATH_LENGTH:
+            raise ValueError(f"Config path too long (max {InputValidator.MAX_CONFIG_PATH_LENGTH} chars)")
+        
+        # Check for path traversal
+        if InputValidator.PATH_TRAVERSAL_PATTERN.search(path):
+            raise ValueError("Path traversal detected in config path")
+        
+        # Only allow .yaml and .yml files
+        if not (path.endswith('.yaml') or path.endswith('.yml')):
+            raise ValueError("Config path must end with .yaml or .yml")
+        
+        # Remove null bytes and control characters
+        sanitized = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', path)
+        
+        return sanitized
+
 def sanitize_input(text: str) -> str:
-    """Sanitize user input to prevent injection attacks."""
-    # Remove potential SQL injection patterns
-    dangerous_patterns = ["';", "--", "/*", "*/", "xp_", "sp_", "DROP", "DELETE", "INSERT", "UPDATE"]
-    sanitized = text
-    for pattern in dangerous_patterns:
-        sanitized = sanitized.replace(pattern, "")
-    return sanitized[:10000]  # Limit length
+    """Legacy function for backward compatibility - use InputValidator instead."""
+    return InputValidator.validate_question(text)
+
+
+async def handle_canopy_query(arguments: Dict[str, Any]) -> List[Union[TextContent, CanopyQueryOutput]]:
+    """Handle canopy_query tool execution."""
+    # Extract and validate arguments
+    try:
+        question = InputValidator.validate_question(arguments["question"])
+        models = arguments.get("models", ["gpt-4", "claude-3"])
+        algorithm = arguments.get("algorithm", "massgen")
+        consensus_threshold = arguments.get("consensus_threshold", 0.66)
+        max_debate_rounds = arguments.get("max_debate_rounds", 3)
+        security_level = arguments.get("security_level", "standard")
+    except ValueError as e:
+        logger.error(f"Input validation error: {e}")
+        return [TextContent(type="text", text=f"Error: {e}")]
+
+    # Security check: validate models
+    allowed_models = [
+        "gpt-4",
+        "gpt-3.5-turbo",
+        "claude-3",
+        "claude-3-opus",
+        "gemini-pro",
+        "gemini-flash",
+    ]
+    models = [m for m in models if m in allowed_models][:5]  # Limit to 5 models
+
+    if not models:
+        logger.error("No valid models specified")
+        return [TextContent(type="text", text="Error: No valid models specified")]
+
+    # Create configuration with security settings
+    config = create_config_from_models(
+        models=models,
+        orchestrator_config={
+            "algorithm": algorithm,
+            "consensus_threshold": consensus_threshold,
+            "max_debate_rounds": max_debate_rounds,
+        },
+    )
+    # Disable streaming display for MCP server usage
+    config.streaming_display.display_enabled = False
+
+    # Add security monitoring
+    if security_level in ["enhanced", "maximum"]:
+        config.logging.log_level = "DEBUG"
+
+    # Run Canopy with progress reporting
+    try:
+        logger.info("Initializing agents...")
+
+        import time
+
+        start_time = time.time()
+        result = await asyncio.to_thread(run_mass_with_config, question, config)
+        execution_time = int((time.time() - start_time) * 1000)
+
+        logger.info("Analysis complete")
+
+        # Return structured output
+        output = CanopyQueryOutput(
+            answer=result["answer"],
+            consensus_reached=result["consensus_reached"],
+            confidence=result.get("confidence", 0.75),
+            representative_agent=result.get("representative_agent_id"),
+            debate_rounds=result.get("summary", {}).get("debate_rounds", 0),
+            execution_time_ms=execution_time,
+        )
+
+        return [output]
+
+    except Exception as e:
+        logger.error(f"Error in canopy_query: {str(e)}")
+        return [TextContent(type="text", text=f"Error: {str(e)}")]
+
+
+async def handle_canopy_query_config(arguments: Dict[str, Any]) -> List[TextContent]:
+    """Handle canopy_query_config tool execution."""
+    # Extract and validate arguments
+    try:
+        question = InputValidator.validate_question(arguments["question"])
+        config_path = InputValidator.validate_config_path(arguments["config_path"])
+        override_security = arguments.get("override_security", False)
+    except ValueError as e:
+        logger.error(f"Input validation error: {e}")
+        return [TextContent(type="text", text=f"Error: {e}")]
+
+    try:
+        # Load configuration with security checks
+        config = load_config_from_yaml(config_path)
+
+        # Apply security overrides if needed
+        if not override_security:
+            config.logging.log_level = "INFO"
+
+        # Run Canopy
+        result = await asyncio.to_thread(run_mass_with_config, question, config)
+
+        # Format response
+        response_text = f"**Answer**: {result['answer']}\n\n"
+        response_text += f"**Config**: {config_path}\n"
+        response_text += f"**Consensus**: {result['consensus_reached']}\n"
+        response_text += f"**Duration**: {result['session_duration']:.2f}s\n"
+
+        return [TextContent(type="text", text=response_text)]
+
+    except Exception as e:
+        logger.error(f"Error in canopy_query_config: {str(e)}")
+        return [TextContent(type="text", text=f"Error: {str(e)}")]
+
+
+async def handle_canopy_analyze(arguments: Dict[str, Any]) -> List[Union[TextContent, AnalysisResult]]:
+    """Handle canopy_analyze tool execution."""
+    # Extract and validate arguments
+    try:
+        question = InputValidator.validate_question(arguments["question"])
+        analysis_type = arguments.get("analysis_type", "compare_algorithms")
+        models = arguments.get("models", ["gpt-4", "claude-3"])
+    except ValueError as e:
+        logger.error(f"Input validation error: {e}")
+        return [TextContent(type="text", text=f"Error: {e}")]
+
+    try:
+        results = {}
+
+        if analysis_type == "compare_algorithms":
+            results, summary, recommendations = await _compare_algorithms(question, models)
+        elif analysis_type == "security_analysis":
+            results, summary, recommendations = _analyze_security(question)
+        else:
+            # Implement other analysis types as before
+            summary = f"Analysis type {analysis_type} completed"
+            recommendations = ["Review results for insights"]
+
+        # Return structured output
+        output = AnalysisResult(
+            analysis_type=analysis_type,
+            results=results,
+            summary=summary,
+            recommendations=recommendations,
+        )
+
+        return [output]
+
+    except Exception as e:
+        logger.error(f"Error in canopy_analyze: {str(e)}")
+        return [TextContent(type="text", text=f"Error: {str(e)}")]
+
+
+async def _compare_algorithms(question: str, models: List[str]) -> tuple:
+    """Compare algorithms for analysis."""
+    logger.info("Comparing algorithms...")
+    results = {}
+
+    for algorithm in ["massgen", "treequest"]:
+        logger.info(f"Testing {algorithm}...")
+
+        config = create_config_from_models(
+            models=models,
+            orchestrator_config={"algorithm": algorithm},
+        )
+        # Disable streaming display for MCP server usage
+        config.streaming_display.display_enabled = False
+        result = await asyncio.to_thread(
+            run_mass_with_config, question, config
+        )
+        results[algorithm] = {
+            "answer": result["answer"][:500],
+            "consensus": result["consensus_reached"],
+            "duration": result["session_duration"],
+            "confidence": result.get("confidence", 0.75),
+        }
+
+    summary = "Both algorithms provided answers. "
+    if (
+        results["massgen"]["consensus"]
+        and results["treequest"]["consensus"]
+    ):
+        summary += "Both achieved consensus. "
+    elif results["canopy"]["consensus"]:
+        summary += "Only MassGen achieved consensus. "
+    elif results["treequest"]["consensus"]:
+        summary += "Only TreeQuest achieved consensus. "
+    else:
+        summary += "Neither achieved full consensus. "
+
+    recommendations = []
+    if results["canopy"]["duration"] < results["treequest"]["duration"]:
+        recommendations.append("Use MassGen for faster results")
+    if (
+        results["treequest"]["confidence"]
+        > results["canopy"]["confidence"]
+    ):
+        recommendations.append("Use TreeQuest for higher confidence")
+
+    return results, summary, recommendations
+
+
+def _analyze_security(question: str) -> tuple:
+    """Analyze security for a question."""
+    logger.info("Performing security analysis...")
+
+    # Analyze query for potential security issues
+    security_checks = {
+        "query_length": len(question) < 5000,
+        "no_injection_patterns": not any(
+            p in question for p in ["';", "--", "DROP"]
+        ),
+        "no_pii": not any(
+            p in question.lower()
+            for p in ["ssn", "credit card", "password"]
+        ),
+    }
+
+    results = {
+        "security_checks": security_checks,
+        "risk_level": "low" if all(security_checks.values()) else "medium",
+        "recommendations": [
+            (
+                "Input validation passed"
+                if security_checks["no_injection_patterns"]
+                else "Review input for potential injection"
+            ),
+            (
+                "Query length acceptable"
+                if security_checks["query_length"]
+                else "Consider shortening query"
+            ),
+            (
+                "No PII detected"
+                if security_checks["no_pii"]
+                else "Remove PII from query"
+            ),
+        ],
+    }
+
+    summary = (
+        f"Security analysis complete. Risk level: {results['risk_level']}"
+    )
+    recommendations = results["recommendations"]
+
+    return results, summary, recommendations
 
 
 @app.call_tool()
@@ -368,189 +687,11 @@ async def call_tool(
     logger.info(f"Executing tool: {name}")
 
     if name == "canopy_query":
-        # Extract and validate arguments
-        question = sanitize_input(arguments["question"])
-        models = arguments.get("models", ["gpt-4", "claude-3"])
-        algorithm = arguments.get("algorithm", "massgen")
-        consensus_threshold = arguments.get("consensus_threshold", 0.66)
-        max_debate_rounds = arguments.get("max_debate_rounds", 3)
-        security_level = arguments.get("security_level", "standard")
-
-        # Security check: validate models
-        allowed_models = ["gpt-4", "gpt-3.5-turbo", "claude-3", "claude-3-opus", "gemini-pro", "gemini-flash"]
-        models = [m for m in models if m in allowed_models][:5]  # Limit to 5 models
-
-        if not models:
-            logger.error("No valid models specified")
-            return [TextContent(type="text", text="Error: No valid models specified")]
-
-        # Create configuration with security settings
-        config = create_config_from_models(
-            models=models,
-            orchestrator_config={
-                "algorithm": algorithm,
-                "consensus_threshold": consensus_threshold,
-                "max_debate_rounds": max_debate_rounds,
-            },
-        )
-        # Disable streaming display for MCP server usage
-        config.streaming_display.display_enabled = False
-
-        # Add security monitoring
-        if security_level in ["enhanced", "maximum"]:
-            config.logging.log_level = "DEBUG"
-
-        # Run Canopy with progress reporting
-        try:
-            logger.info("Initializing agents...")
-
-            import time
-
-            start_time = time.time()
-            result = await asyncio.to_thread(run_mass_with_config, question, config)
-            execution_time = int((time.time() - start_time) * 1000)
-
-            logger.info("Analysis complete")
-
-            # Return structured output
-            output = CanopyQueryOutput(
-                answer=result["answer"],
-                consensus_reached=result["consensus_reached"],
-                confidence=result.get("confidence", 0.75),
-                representative_agent=result.get("representative_agent_id"),
-                debate_rounds=result.get("summary", {}).get("debate_rounds", 0),
-                execution_time_ms=execution_time,
-            )
-
-            return [output]
-
-        except Exception as e:
-            logger.error(f"Error in canopy_query: {str(e)}")
-            return [TextContent(type="text", text=f"Error: {str(e)}")]
-
+        return await handle_canopy_query(arguments)
     elif name == "canopy_query_config":
-        # Extract and validate arguments
-        question = sanitize_input(arguments["question"])
-        config_path = arguments["config_path"]
-        override_security = arguments.get("override_security", False)
-
-        # Security: validate config path
-        if not config_path.endswith(".yaml") or ".." in config_path:
-            logger.error("Invalid config path")
-            return [TextContent(type="text", text="Error: Invalid configuration path")]
-
-        try:
-            # Load configuration with security checks
-            config = load_config_from_yaml(config_path)
-
-            # Apply security overrides if needed
-            if not override_security:
-                config.logging.log_level = "INFO"
-
-            # Run Canopy
-            result = await asyncio.to_thread(run_mass_with_config, question, config)
-
-            # Format response
-            response_text = f"**Answer**: {result['answer']}\n\n"
-            response_text += f"**Config**: {config_path}\n"
-            response_text += f"**Consensus**: {result['consensus_reached']}\n"
-            response_text += f"**Duration**: {result['session_duration']:.2f}s\n"
-
-            return [TextContent(type="text", text=response_text)]
-
-        except Exception as e:
-            logger.error(f"Error in canopy_query_config: {str(e)}")
-            return [TextContent(type="text", text=f"Error: {str(e)}")]
-
+        return await handle_canopy_query_config(arguments)
     elif name == "canopy_analyze":
-        # Extract and validate arguments
-        question = sanitize_input(arguments["question"])
-        analysis_type = arguments.get("analysis_type", "compare_algorithms")
-        models = arguments.get("models", ["gpt-4", "claude-3"])
-        include_security = arguments.get("include_security_metrics", True)
-
-        try:
-            results = {}
-
-            if analysis_type == "compare_algorithms":
-                logger.info("Comparing algorithms...")
-
-                for i, algorithm in enumerate(["massgen", "treequest"]):
-                    logger.info(f"Testing {algorithm}...")
-
-                    config = create_config_from_models(
-                        models=models,
-                        orchestrator_config={"algorithm": algorithm},
-                    )
-                    # Disable streaming display for MCP server usage
-                    config.streaming_display.display_enabled = False
-                    result = await asyncio.to_thread(run_mass_with_config, question, config)
-                    results[algorithm] = {
-                        "answer": result["answer"][:500],
-                        "consensus": result["consensus_reached"],
-                        "duration": result["session_duration"],
-                        "confidence": result.get("confidence", 0.75),
-                    }
-
-                summary = "Both algorithms provided answers. "
-                if results["massgen"]["consensus"] and results["treequest"]["consensus"]:
-                    summary += "Both achieved consensus. "
-                elif results["massgen"]["consensus"]:
-                    summary += "Only MassGen achieved consensus. "
-                elif results["treequest"]["consensus"]:
-                    summary += "Only TreeQuest achieved consensus. "
-                else:
-                    summary += "Neither achieved full consensus. "
-
-                recommendations = []
-                if results["massgen"]["duration"] < results["treequest"]["duration"]:
-                    recommendations.append("Use MassGen for faster results")
-                if results["treequest"]["confidence"] > results["massgen"]["confidence"]:
-                    recommendations.append("Use TreeQuest for higher confidence")
-
-            elif analysis_type == "security_analysis":
-                logger.info("Performing security analysis...")
-
-                # Analyze query for potential security issues
-                security_checks = {
-                    "query_length": len(question) < 5000,
-                    "no_injection_patterns": not any(p in question for p in ["';", "--", "DROP"]),
-                    "no_pii": not any(p in question.lower() for p in ["ssn", "credit card", "password"]),
-                }
-
-                results = {
-                    "security_checks": security_checks,
-                    "risk_level": "low" if all(security_checks.values()) else "medium",
-                    "recommendations": [
-                        (
-                            "Input validation passed"
-                            if security_checks["no_injection_patterns"]
-                            else "Review input for potential injection"
-                        ),
-                        "Query length acceptable" if security_checks["query_length"] else "Consider shortening query",
-                        "No PII detected" if security_checks["no_pii"] else "Remove PII from query",
-                    ],
-                }
-
-                summary = f"Security analysis complete. Risk level: {results['risk_level']}"
-                recommendations = results["recommendations"]
-
-            else:
-                # Implement other analysis types as before
-                summary = f"Analysis type {analysis_type} completed"
-                recommendations = ["Review results for insights"]
-
-            # Return structured output
-            output = AnalysisResult(
-                analysis_type=analysis_type, results=results, summary=summary, recommendations=recommendations
-            )
-
-            return [output]
-
-        except Exception as e:
-            logger.error(f"Error in canopy_analyze: {str(e)}")
-            return [TextContent(type="text", text=f"Error: {str(e)}")]
-
+        return await handle_canopy_analyze(arguments)
     else:
         logger.error(f"Unknown tool: {name}")
         return [TextContent(type="text", text=f"Unknown tool: {name}")]
@@ -564,14 +705,24 @@ async def list_prompts() -> List[Prompt]:
             name="consensus_analysis",
             description="Analyze a topic using multi-agent consensus",
             arguments=[
-                PromptArgument(name="topic", description="The topic to analyze", required=True),
-                PromptArgument(name="depth", description="Analysis depth (basic, standard, thorough)", required=False),
+                PromptArgument(
+                    name="topic", description="The topic to analyze", required=True
+                ),
+                PromptArgument(
+                    name="depth",
+                    description="Analysis depth (basic, standard, thorough)",
+                    required=False,
+                ),
             ],
         ),
         Prompt(
             name="security_review",
             description="Review query for security considerations",
-            arguments=[PromptArgument(name="query", description="The query to review", required=True)],
+            arguments=[
+                PromptArgument(
+                    name="query", description="The query to review", required=True
+                )
+            ],
         ),
     ]
 
@@ -618,7 +769,10 @@ async def get_prompt(name: str, arguments: Dict[str, str]) -> GetPromptResult:
 async def main():
     """Run the MCP server with security configuration."""
     # Configure logging
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
 
     # Validate environment
     required_vars = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"]
