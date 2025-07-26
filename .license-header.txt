@@ -1,0 +1,2 @@
+Algorithm extensions for MassGen
+Based on the original MassGen framework: https://github.com/Leezekun/MassGen

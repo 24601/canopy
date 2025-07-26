@@ -7,7 +7,7 @@ Thank you for your interest in contributing to MassGen (Multi-Agent Scaling Syst
 ### Project Structure
 
 ```
-massgen/
+canopy_core/
 ├── __init__.py          # Main package exports
 ├── agent.py             # Abstract base agent class
 ├── agents.py            # Concrete agent implementations
@@ -29,15 +29,15 @@ massgen/
 
 To add support for a new model provider:
 
-1. Create a new file in `massgen/backends/` (e.g., `claude.py`)
+1. Create a new file in `canopy_core/backends/` (e.g., `claude.py`)
 2. Implement the `process_message` and `parse_completion` function with the required signature
-3. Add the model mapping in `massgen/utils.py`
-4. Update the agent creation logic in `massgen/agents.py` if it is unique
+3. Add the model mapping in `canopy_core/utils.py`
+4. Update the agent creation logic in `canopy_core/agents.py` if it is unique
 5. Add tests and documentation
 
 To add more tools for agents:
 
-1. Create or extend tool definitions in `massgen/tools.py`
+1. Create or extend tool definitions in `canopy_core/tools.py`
 2. Register your custom tool with the appropriate model backends
 3. Ensure compatibility with the tool calling interface of each model
 4. Test tool functionality across different agent configurations
@@ -46,10 +46,10 @@ To add more tools for agents:
 
 Current built-in tool support by model:
 - **Gemini**: Live Search ✅, Code Execution ✅
-- **OpenAI**: Live Search ✅, Code Execution ✅  
+- **OpenAI**: Live Search ✅, Code Execution ✅
 - **Grok**: Live Search ✅, Code Execution ❌
 
-Current custom tool support (`massgen/tools.py`):
+Current custom tool support (`canopy_core/tools.py`):
 - **calculator**
 - **python interpretor**
 
@@ -61,7 +61,7 @@ We welcome contributions in these areas:
 - **Tools and Integrations**: Extend the tool system with new capabilities
 - **Performance Improvements**: Optimize coordination, communication, etc
 - **Documentation**: Add guides, examples, use cases, and API documentation
-- **Testing**: Add comprehensive test coverage
+- **Testing**: Add tests for new features and changes
 - **Bug Fixes**: Fix issues and edge cases
 
 

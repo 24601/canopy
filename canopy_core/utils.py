@@ -1,0 +1,190 @@
+import inspect
+import json
+import random
+
+# Model mappings and constants
+MODEL_MAPPINGS = {
+    "openai": [
+        # GPT-4 variants
+        "gpt-4",
+        "gpt-4-turbo",
+        # GPT-4o variants
+        "gpt-4o-mini",
+        "gpt-4o",
+        # o1 series
+        "o1",  # -> o1-2024-12-17
+        # Note: Future models like o3, o4, gpt-4.1 are speculative
+        # Uncomment when officially available:
+        # "gpt-4.1", "gpt-4.1-mini", "gpt-4.1-nano",
+        # "o3", "o3-low", "o3-medium", "o3-high",
+        # "o3-mini", "o3-mini-low", "o3-mini-medium", "o3-mini-high",
+        # "o4-mini", "o4-mini-low", "o4-mini-medium", "o4-mini-high",
+    ],
+    "gemini": [
+        # Gemini 1.5 family (current latest)
+        "gemini-1.5-pro",
+        "gemini-1.5-flash",
+        # Note: Gemini 2.5 models are speculative/future releases
+        # Uncomment when officially available:
+        # "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.5-pro-deep-think",
+    ],
+    "grok": [
+        # Current Grok models (as of Jan 2025)
+        "grok-beta",
+        # Note: Grok 3 and 4 models are speculative/future releases
+        # Uncomment when officially available:
+        # "grok-3", "grok-3-mini", "grok-4", "grok-4-heavy",
+    ],
+    "anthropic": [
+        # Claude 3.5 variants (current latest)
+        "claude-3.5-sonnet",
+        "claude-3.5-sonnet-20241022",
+        # Claude 3 variants
+        "claude-3-opus",
+        "claude-3-sonnet",
+        "claude-3-haiku",
+        # Note: Claude 4 and 3.7 models are speculative/future releases
+        # Uncomment when officially available:
+        # "claude-4", "claude-4-opus", "claude-4-sonnet", "claude-opus-4", "claude-sonnet-4",
+        # "claude-3.7-sonnet", "claude-3.7-opus",
+    ],
+}
+
+
+def get_agent_type_from_model(model: str) -> str:
+    """
+    Determine the agent type based on the model name.
+
+    Args:
+        model: The model name (e.g., "gpt-4", "gemini-pro", "grok-1")
+
+    Returns:
+        Agent type string ("openai", "gemini", "grok")
+    """
+    if not model:
+        return "openai"  # Default to OpenAI
+
+    model_lower = model.lower()
+
+    for key, models in MODEL_MAPPINGS.items():
+        if model_lower in models:
+            return key
+    raise ValueError(f"Unknown model: {model}")
+
+
+def get_available_models() -> list:
+    """Get a flat list of all available model names."""
+    all_models = []
+    for models in MODEL_MAPPINGS.values():
+        all_models.extend(models)
+    return all_models
+
+
+def generate_random_id(length: int = 24) -> str:
+    """Generate a random ID string."""
+    characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    return "".join(random.choice(characters) for _ in range(length))
+
+
+# Utility functions (originally from util.py)
+def execute_function_calls(function_calls, tool_mapping):
+    """Execute function calls and return formatted outputs for the conversation."""
+    function_outputs = []
+    for function_call in function_calls:
+        try:
+            # Get the function from tool mapping
+            target_function = None
+            function_name = function_call.get("name")
+
+            # Look up function in tool_mapping
+            if function_name in tool_mapping:
+                target_function = tool_mapping[function_name]
+            else:
+                # Handle error case
+                error_output = {
+                    "type": "function_call_output",
+                    "call_id": function_call.get("call_id"),
+                    "output": f"Error: Function '{function_name}' not found in tool mapping",
+                }
+                function_outputs.append(error_output)
+                continue
+
+            # Parse arguments and execute function
+            if isinstance(function_call.get("arguments", {}), str):
+                arguments = json.loads(function_call.get("arguments", "{}"))
+            elif isinstance(function_call.get("arguments", {}), dict):
+                arguments = function_call.get("arguments", {})
+            else:
+                raise ValueError(f"Unknown arguments type: {type(function_call.get('arguments', {}))}")
+            result = target_function(**arguments)
+
+            # Format the output according to Responses API requirements
+            function_output = {
+                "type": "function_call_output",
+                "call_id": function_call.get("call_id"),
+                "output": str(result),
+            }
+            function_outputs.append(function_output)
+
+            # print(f"Executed function: {function_name}({arguments}) -> {result}")
+
+        except Exception as e:
+            # Handle execution errors
+            error_output = {
+                "type": "function_call_output",
+                "call_id": function_call.get("call_id"),
+                "output": f"Error executing function: {str(e)}",
+            }
+            function_outputs.append(error_output)
+            # print(f"Error executing function {function_name}: {e}")
+
+    return function_outputs
+
+
+def function_to_json(func) -> dict:
+    """
+    Converts a Python function into a JSON-serializable dictionary
+    that describes the function's signature, including its name,
+    description, and parameters.
+
+    Args:
+        func: The function to be converted.
+
+    Returns:
+        A dictionary representing the function's signature in JSON format.
+    """
+    type_map = {
+        str: "string",
+        int: "integer",
+        float: "number",
+        bool: "boolean",
+        list: "array",
+        dict: "object",
+        type(None): "null",
+    }
+
+    try:
+        signature = inspect.signature(func)
+    except ValueError as e:
+        raise ValueError(f"Failed to get signature for function {func.__name__}: {str(e)}")
+
+    parameters = {}
+    for param in signature.parameters.values():
+        try:
+            param_type = type_map.get(param.annotation, "string")
+        except KeyError as e:
+            raise KeyError(f"Unknown type annotation {param.annotation} for parameter {param.name}: {str(e)}")
+        parameters[param.name] = {"type": param_type}
+
+    required = [param.name for param in signature.parameters.values() if param.default == inspect._empty]
+
+    return {
+        "type": "function",
+        "name": func.__name__,
+        "description": func.__doc__ or "",
+        "parameters": {
+            "type": "object",
+            "properties": parameters,
+            "required": required,
+        },
+    }

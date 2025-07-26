@@ -48,7 +48,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
-
+tests/tui/tui_test_results*
 # Translations
 *.mo
 *.pot
@@ -190,6 +190,7 @@ tmp/
 temp/
 *.tmp
 *.temp
+.scratchpad
 
 # Large model files
 *.bin
@@ -201,3 +202,10 @@ models/
 *.sqlite
 *.sqlite3
 gemini_streaming.txt
+
+
+.ctx
+.marketing/
+
+# External benchmark repos (not part of our codebase)
+benchmarks/ab-mcts-arc2/

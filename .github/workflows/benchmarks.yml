@@ -1,0 +1,269 @@
+name: Benchmarks
+
+on:
+  workflow_dispatch:
+    inputs:
+      algorithms:
+        description: 'Algorithms to benchmark (comma-separated)'
+        required: false
+        default: 'massgen,treequest'
+      quick:
+        description: 'Run quick benchmark'
+        required: false
+        type: boolean
+        default: false
+  schedule:
+    # Run benchmarks weekly on Sunday at 2 AM UTC
+    - cron: '0 2 * * 0'
+
+env:
+  PYTHON_VERSION: '3.10'
+
+jobs:
+  sakana-benchmarks:
+    name: Sakana AI Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-benchmarks-${{ hashFiles('**/requirements.txt', '**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-benchmarks-
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+
+          # Install benchmark-specific dependencies
+          pip install treequest
+
+      - name: Run Sakana benchmarks
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          # Check if required API keys are available
+          if [ -z "$OPENAI_API_KEY" ] || [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "⚠️ Required API keys not configured. Skipping benchmarks."
+            echo "Please set OPENAI_API_KEY and OPENROUTER_API_KEY as repository secrets."
+            exit 0
+          fi
+
+          # Parse algorithms input
+          ALGO_ARGS=""
+          if [ -n "${{ github.event.inputs.algorithms }}" ]; then
+            IFS=',' read -ra ALGOS <<< "${{ github.event.inputs.algorithms }}"
+            for algo in "${ALGOS[@]}"; do
+              ALGO_ARGS="$ALGO_ARGS --algorithms $algo"
+            done
+          fi
+
+          # Run benchmarks
+          if [ "${{ github.event.inputs.quick }}" == "true" ]; then
+            echo "🚀 Running quick Sakana benchmarks..."
+            python benchmarks/sakana_benchmarks.py --quick $ALGO_ARGS
+          else
+            echo "🚀 Running full Sakana benchmarks..."
+            python benchmarks/sakana_benchmarks.py $ALGO_ARGS
+          fi
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sakana-benchmark-results
+          path: benchmarks/results/sakana/
+          retention-days: 30
+
+  standard-benchmarks:
+    name: Standard Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-benchmarks-${{ hashFiles('**/requirements.txt', '**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-benchmarks-
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+
+      - name: Run standard benchmarks
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        run: |
+          # Check if API keys are available
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "⚠️ OPENAI_API_KEY not configured. Skipping standard benchmarks."
+            exit 0
+          fi
+
+          # Parse algorithms input
+          ALGO_ARGS=""
+          if [ -n "${{ github.event.inputs.algorithms }}" ]; then
+            IFS=',' read -ra ALGOS <<< "${{ github.event.inputs.algorithms }}"
+            for algo in "${ALGOS[@]}"; do
+              ALGO_ARGS="$ALGO_ARGS --algorithms $algo"
+            done
+          fi
+
+          # Run benchmarks
+          if [ "${{ github.event.inputs.quick }}" == "true" ]; then
+            echo "🚀 Running quick standard benchmarks..."
+            python benchmarks/run_benchmarks.py --quick $ALGO_ARGS
+          else
+            echo "🚀 Running standard benchmarks..."
+            python benchmarks/run_benchmarks.py $ALGO_ARGS
+          fi
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: standard-benchmark-results
+          path: benchmarks/results/
+          retention-days: 30
+
+  analyze-results:
+    name: Analyze Results
+    runs-on: ubuntu-latest
+    needs: [sakana-benchmarks, standard-benchmarks]
+    if: always()
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Download Sakana results
+        uses: actions/download-artifact@v4
+        with:
+          name: sakana-benchmark-results
+          path: benchmarks/results/sakana/
+        continue-on-error: true
+
+      - name: Download standard results
+        uses: actions/download-artifact@v4
+        with:
+          name: standard-benchmark-results
+          path: benchmarks/results/
+        continue-on-error: true
+
+      - name: Analyze all results
+        run: |
+          echo "📊 Analyzing benchmark results..."
+
+          # Check if we have Sakana results
+          if [ -d "benchmarks/results/sakana" ] && [ "$(ls -A benchmarks/results/sakana)" ]; then
+            echo "### Sakana AI Benchmark Results"
+            python benchmarks/analyze_results.py --results-dir benchmarks/results/sakana
+          fi
+
+          # Check if we have standard results
+          if [ -d "benchmarks/results" ] && [ "$(ls -A benchmarks/results/*.json 2>/dev/null)" ]; then
+            echo "### Standard Benchmark Results"
+            python benchmarks/analyze_results.py --results-dir benchmarks/results
+          fi
+
+      - name: Upload analysis report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-analysis
+          path: benchmarks/results/**/*.md
+          retention-days: 30
+
+  benchmark-summary:
+    name: Benchmark Summary
+    runs-on: ubuntu-latest
+    needs: [analyze-results]
+    if: always()
+
+    steps:
+      - name: Create summary
+        run: |
+          echo "# Benchmark Run Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "**Algorithms**: ${{ github.event.inputs.algorithms }}" >> $GITHUB_STEP_SUMMARY
+            echo "**Quick mode**: ${{ github.event.inputs.quick }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Sakana AI Benchmarks" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.sakana-benchmarks.result }}" == "success" ]; then
+            echo "✅ Completed successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.sakana-benchmarks.result }}" == "skipped" ]; then
+            echo "⏭️ Skipped (API keys not configured)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Failed or incomplete" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Standard Benchmarks" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.standard-benchmarks.result }}" == "success" ]; then
+            echo "✅ Completed successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.standard-benchmarks.result }}" == "skipped" ]; then
+            echo "⏭️ Skipped (API keys not configured)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Failed or incomplete" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Analysis" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.analyze-results.result }}" == "success" ]; then
+            echo "✅ Analysis completed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Analysis failed or incomplete" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*View artifacts for detailed results*" >> $GITHUB_STEP_SUMMARY

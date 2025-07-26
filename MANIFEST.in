@@ -3,9 +3,9 @@ include LICENSE
 include CONTRIBUTING.md
 include requirements.txt
 include examples/*.yaml
-include massgen/backends/.env.example
+include canopy_core/backends/.env.example
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
 exclude .gitignore
 exclude *.log
-exclude logs/* 
+exclude logs/*

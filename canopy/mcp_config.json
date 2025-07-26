@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "canopy": {
+      "command": "python",
+      "args": [
+        "-m",
+        "canopy.mcp_server"
+      ],
+      "env": {
+        "PYTHONPATH": "."
+      }
+    }
+  }
+}

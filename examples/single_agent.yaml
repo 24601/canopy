@@ -1,4 +1,4 @@
-# MassGen Configuration: Single Agent Mode
+# Canopy Configuration: Single Agent Mode
 #
 # Simple configuration for single-agent processing.
 # Ideal for straightforward tasks that don't require multi-agent collaboration.
@@ -36,4 +36,4 @@ streaming_display:
 logging:
   log_dir: "logs"
   session_id: null              # Auto-generate
-  non_blocking: true 
+  non_blocking: true

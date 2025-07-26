@@ -1,10 +1,10 @@
-# MassGen Configuration: Production
+# Canopy Configuration: Production
 #
 # Optimized for production use with reliable, high-quality results.
 # Uses robust models with strict consensus requirements and comprehensive logging.
 #
 # Usage:
-#   python -m massgen --config examples/production.yaml "Production question"
+#   python -m canopy --config examples/production.yaml "Production question"
 
 orchestrator:
   max_duration: 900           # 15 minutes for thorough analysis
@@ -67,4 +67,4 @@ logging:
 task:
   category: "production"
   domain: "business"
-  complexity: "high" 
+  complexity: "high"
