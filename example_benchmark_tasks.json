@@ -1,0 +1,126 @@
+[
+  {
+    "task_id": "math_arithmetic_001",
+    "question": "Calculate 127 * 93 + 256 ÷ 8",
+    "category": "mathematics",
+    "difficulty": "easy",
+    "expected_answer": "11843",
+    "evaluation_criteria": ["numerical_accuracy", "step_by_step_reasoning"],
+    "metadata": {
+      "domain": "arithmetic",
+      "requires_calculation": true
+    }
+  },
+  {
+    "task_id": "logic_deduction_001", 
+    "question": "All birds can fly. Penguins are birds. Can penguins fly? Explain your reasoning.",
+    "category": "logic",
+    "difficulty": "medium",
+    "expected_answer": "This is a logical fallacy. The premise 'All birds can fly' is incorrect. Penguins are birds but cannot fly.",
+    "evaluation_criteria": ["logical_reasoning", "identification_of_fallacy", "factual_accuracy"],
+    "metadata": {
+      "domain": "deductive_reasoning",
+      "involves_fallacy": true
+    }
+  },
+  {
+    "task_id": "reasoning_puzzle_001",
+    "question": "You have 12 balls, 11 of which weigh the same and 1 is either heavier or lighter. Using a balance scale only 3 times, how can you identify the different ball and determine if it's heavier or lighter?",
+    "category": "reasoning",
+    "difficulty": "hard",
+    "expected_answer": "Divide into groups of 4. Compare two groups. If balanced, the odd ball is in the third group. If unbalanced, narrow down using systematic comparisons.",
+    "evaluation_criteria": ["systematic_approach", "optimal_solution", "clear_explanation"],
+    "metadata": {
+      "domain": "puzzle_solving",
+      "requires_strategy": true
+    }
+  },
+  {
+    "task_id": "analysis_economics_001",
+    "question": "Analyze the potential effects of a 25% increase in minimum wage on small businesses, employment rates, and consumer prices. Consider both short-term and long-term impacts.",
+    "category": "analysis",
+    "difficulty": "hard",
+    "expected_answer": null,
+    "evaluation_criteria": ["comprehensive_analysis", "consideration_of_multiple_perspectives", "economic_reasoning", "long_term_thinking"],
+    "metadata": {
+      "domain": "economic_analysis",
+      "requires_multi_perspective": true,
+      "subjective_evaluation": true
+    }
+  },
+  {
+    "task_id": "creativity_innovation_001",
+    "question": "Design an innovative solution to reduce food waste in urban areas that could be implemented within 2 years with a budget of $1 million.",
+    "category": "creativity",
+    "difficulty": "hard",
+    "expected_answer": null,
+    "evaluation_criteria": ["innovation", "feasibility", "impact_potential", "budget_consideration"],
+    "metadata": {
+      "domain": "social_innovation",
+      "requires_creativity": true,
+      "practical_constraints": true
+    }
+  },
+  {
+    "task_id": "math_probability_001",
+    "question": "In a deck of 52 cards, what's the probability of drawing 2 aces in a row without replacement?",
+    "category": "mathematics",
+    "difficulty": "medium",
+    "expected_answer": "1/221 or approximately 0.45%",
+    "evaluation_criteria": ["probability_calculation", "understanding_without_replacement", "correct_formula"],
+    "metadata": {
+      "domain": "probability",
+      "requires_formula": true
+    }
+  },
+  {
+    "task_id": "logic_conditional_001",
+    "question": "If it's raining, then the ground is wet. The ground is wet. Can we conclude it's raining?",
+    "category": "logic",
+    "difficulty": "easy",
+    "expected_answer": "No, we cannot conclude it's raining. This would be affirming the consequent fallacy. The ground could be wet for other reasons.",
+    "evaluation_criteria": ["logical_reasoning", "fallacy_identification", "alternative_explanations"],
+    "metadata": {
+      "domain": "conditional_logic",
+      "involves_fallacy": true
+    }
+  },
+  {
+    "task_id": "reasoning_strategy_001",  
+    "question": "You're managing a team of 8 people with different skill sets. You have 3 urgent projects that need to be completed in 2 weeks. How would you allocate resources and manage priorities?",
+    "category": "reasoning",
+    "difficulty": "medium",
+    "expected_answer": null,
+    "evaluation_criteria": ["resource_allocation", "priority_management", "team_coordination", "realistic_planning"],
+    "metadata": {
+      "domain": "project_management",
+      "requires_strategic_thinking": true
+    }
+  },
+  {
+    "task_id": "analysis_technology_001",
+    "question": "Evaluate the ethical implications of AI-powered facial recognition systems in public spaces. Consider privacy, security, bias, and societal impact.",
+    "category": "analysis", 
+    "difficulty": "hard",
+    "expected_answer": null,
+    "evaluation_criteria": ["ethical_reasoning", "multiple_stakeholder_perspectives", "balanced_analysis", "societal_implications"],
+    "metadata": {
+      "domain": "technology_ethics",
+      "requires_ethical_reasoning": true,
+      "controversial_topic": true
+    }
+  },
+  {
+    "task_id": "creativity_design_001",
+    "question": "Create a concept for a mobile app that helps elderly people stay connected with technology and family. Include key features and user experience considerations.",
+    "category": "creativity",
+    "difficulty": "medium", 
+    "expected_answer": null,
+    "evaluation_criteria": ["user_centered_design", "accessibility_considerations", "feature_innovation", "practical_implementation"],
+    "metadata": {
+      "domain": "product_design",
+      "target_demographic": "elderly",
+      "requires_empathy": true
+    }
+  }
+]

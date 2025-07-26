@@ -178,6 +178,60 @@ def run_interactive_mode(config):
     except KeyboardInterrupt:
         print("\n👋 Goodbye!")
 
+def run_benchmark_command(args):
+    """Handle the benchmark subcommand."""
+    try:
+        from massgen.benchmarking import BenchmarkSuite, correctness_evaluator, efficiency_evaluator, quality_evaluator
+        from massgen.algorithms import get_available_algorithms
+        
+        # Validate algorithms
+        available_algorithms = get_available_algorithms()
+        for algorithm in args.algorithms:
+            if algorithm not in available_algorithms:
+                print(f"❌ Error: Unknown algorithm '{algorithm}'")
+                print(f"Available algorithms: {available_algorithms}")
+                return 1
+        
+        print("🧪 Running MassGen Algorithm Benchmarks")
+        print("="*60)
+        print(f"Algorithms: {args.algorithms}")
+        
+        # Initialize benchmark suite
+        suite = BenchmarkSuite(output_dir=args.output_dir)
+        
+        # Add evaluators
+        suite.add_evaluator("correctness", correctness_evaluator)
+        suite.add_evaluator("efficiency", efficiency_evaluator)
+        suite.add_evaluator("quality", quality_evaluator)
+        
+        # Load tasks
+        if args.tasks:
+            if not Path(args.tasks).exists():
+                print(f"❌ Error: Task file not found: {args.tasks}")
+                return 1
+            suite.add_tasks_from_file(args.tasks)
+        else:
+            suite.create_default_tasks()
+        
+        print(f"📋 Running {len(suite.tasks)} tasks")
+        
+        # Run benchmarks
+        results = suite.run_benchmark(
+            algorithms=args.algorithms,
+            max_workers=args.max_workers
+        )
+        
+        # Print summary and export results
+        suite.print_summary()
+        output_file = suite.export_results(format=args.export)
+        print(f"📁 Results exported to: {output_file}")
+        
+        return 0
+        
+    except Exception as e:
+        print(f"❌ Benchmark error: {e}")
+        return 1
+
 
 def main():
     """Clean CLI interface for MassGen."""
@@ -195,6 +249,9 @@ Examples:
   
   # Interactive mode (no question provided)
   python cli.py --models gpt-4o grok-4
+  
+  # Run benchmarks
+  python cli.py benchmark --algorithms default arxiv_2503_04412
   
   # Override parameters
   python cli.py "Question" --models gpt-4o gemini-2.5-flash --algorithm default --max-duration 1200 --consensus 0.8
@@ -225,7 +282,27 @@ Examples:
     parser.add_argument("--no-logs", action="store_true",
                        help="Disable file logging")
     
+    # Benchmarking subcommand
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    
+    # Benchmark subcommand
+    benchmark_parser = subparsers.add_parser('benchmark', help='Run algorithm benchmarks')
+    benchmark_parser.add_argument("--algorithms", nargs="+", required=True,
+                                 help="Algorithms to benchmark")
+    benchmark_parser.add_argument("--tasks", type=str,
+                                 help="JSON file with benchmark tasks")
+    benchmark_parser.add_argument("--export", choices=["json", "csv", "html"], default="json",
+                                 help="Export format")
+    benchmark_parser.add_argument("--output-dir", default="benchmark_results",
+                                 help="Output directory")
+    benchmark_parser.add_argument("--max-workers", type=int, default=2,
+                                 help="Max concurrent workers")
+    
     args = parser.parse_args()
+    
+    # Handle benchmark command
+    if args.command == 'benchmark':
+        return run_benchmark_command(args)
             
     # Load configuration
     try:

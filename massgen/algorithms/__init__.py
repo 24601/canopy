@@ -14,11 +14,14 @@ Supported Algorithms:
 
 from .base import Algorithm
 from .default import DefaultAlgorithm
+from .arxiv_2503 import Arxiv2503Algorithm
 
 # Algorithm registry for easy creation
 ALGORITHMS = {
     "default": DefaultAlgorithm,
     "collaborative": DefaultAlgorithm,  # Alias for backward compatibility
+    "arxiv_2503_04412": Arxiv2503Algorithm,
+    "structured": Arxiv2503Algorithm,  # Alias for convenience
 }
 
 def create_algorithm(algorithm_name: str, **kwargs) -> Algorithm:
@@ -49,6 +52,7 @@ def get_available_algorithms():
 __all__ = [
     "Algorithm",
     "DefaultAlgorithm", 
+    "Arxiv2503Algorithm",
     "create_algorithm",
     "get_available_algorithms",
     "ALGORITHMS"
