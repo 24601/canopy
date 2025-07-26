@@ -28,7 +28,7 @@ export OPENROUTER_API_KEY=your_key_here
 
 # Ask a question with multiple AI agents
 python -m canopy "What's the best way to learn programming?" \
-  --models gpt-4o claude-3-5-sonnet
+  --models gpt-4.1 claude-4-sonnet
 
 # Start the API server
 python -m canopy --serve
@@ -197,13 +197,13 @@ XAI_API_KEY=your_key_here
 
 ```bash
 # Multi-agent mode with specific models
-python cli.py "Explain quantum computing" --models gpt-4o claude-3-5-sonnet gemini-2.0-flash
+python cli.py "Explain quantum computing" --models gpt-4.1 claude-4-sonnet gemini-2.5-pro
 
 # Use configuration file
 python cli.py --config examples/fast_config.yaml "Your question here"
 
 # Interactive mode
-python cli.py --models gpt-4o gemini-2.0-flash
+python cli.py --models gpt-4.1 gemini-2.5-pro
 ```
 
 📚 **[More Examples →](docs/quickstart/examples.md)**
@@ -227,7 +227,7 @@ response = client.chat.completions.create(
     model="canopy-multi",
     messages=[{"role": "user", "content": "Your question"}],
     extra_body={
-        "agent_models": ["gpt-4o", "claude-3-5-sonnet", "gemini-2.0-flash"],
+        "agent_models": ["gpt-4.1", "claude-4-sonnet", "gemini-2.5-pro"],
         "algorithm": "treequest",
         "consensus_threshold": 0.75
     }
@@ -254,7 +254,7 @@ from canopy.a2a_agent import CanopyA2AAgent
 
 agent = CanopyA2AAgent(
     name="canopy_assistant",
-    models=["gpt-4o", "claude-3-5-sonnet"],
+    models=["gpt-4.1", "claude-4-sonnet"],
     consensus_threshold=0.75
 )
 

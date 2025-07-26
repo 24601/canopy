@@ -1,11 +1,176 @@
 {
   "testModules": [
     {
-      "moduleId": "tests/test_a2a_basic.py",
+      "moduleId": "tests/test_a2a_agent.py",
       "tests": [
         {
           "name": "test_agent_card_default_values",
-          "fullName": "tests/test_a2a_basic.py::TestAgentCard::test_agent_card_default_values",
+          "fullName": "tests/test_a2a_agent.py::TestAgentCard::test_agent_card_default_values",
+          "state": "passed"
+        },
+        {
+          "name": "test_agent_card_serialization",
+          "fullName": "tests/test_a2a_agent.py::TestAgentCard::test_agent_card_serialization",
+          "state": "passed"
+        },
+        {
+          "name": "test_agent_card_custom_values",
+          "fullName": "tests/test_a2a_agent.py::TestAgentCard::test_agent_card_custom_values",
+          "state": "passed"
+        },
+        {
+          "name": "test_get_capabilities_basic",
+          "fullName": "tests/test_a2a_agent.py::TestCapabilities::test_get_capabilities_basic",
+          "state": "failed",
+          "errors": [
+            {
+              "message": "tests/test_a2a_agent.py:133: in test_get_capabilities_basic\n    cap_names = [cap.name for cap in capabilities]\nE   AttributeError: 'dict' object has no attribute 'name'"
+            }
+          ]
+        },
+        {
+          "name": "test_capability_serialization",
+          "fullName": "tests/test_a2a_agent.py::TestCapabilities::test_capability_serialization",
+          "state": "failed",
+          "errors": [
+            {
+              "message": "tests/test_a2a_agent.py:149: in test_capability_serialization\n    cap_dict = cap.to_dict()\nE   AttributeError: 'dict' object has no attribute 'to_dict'"
+            }
+          ]
+        },
+        {
+          "name": "test_capability_parameters",
+          "fullName": "tests/test_a2a_agent.py::TestCapabilities::test_capability_parameters",
+          "state": "passed"
+        },
+        {
+          "name": "test_handle_query_message",
+          "fullName": "tests/test_a2a_agent.py::TestMessageHandling::test_handle_query_message",
+          "state": "passed"
+        },
+        {
+          "name": "test_handle_capabilities_message",
+          "fullName": "tests/test_a2a_agent.py::TestMessageHandling::test_handle_capabilities_message",
+          "state": "passed"
+        },
+        {
+          "name": "test_handle_info_message",
+          "fullName": "tests/test_a2a_agent.py::TestMessageHandling::test_handle_info_message",
+          "state": "passed"
+        },
+        {
+          "name": "test_handle_unknown_message_type",
+          "fullName": "tests/test_a2a_agent.py::TestMessageHandling::test_handle_unknown_message_type",
+          "state": "passed"
+        },
+        {
+          "name": "test_handle_query_with_metadata",
+          "fullName": "tests/test_a2a_agent.py::TestMessageHandling::test_handle_query_with_metadata",
+          "state": "failed",
+          "errors": [
+            {
+              "message": "tests/test_a2a_agent.py:290: in test_handle_query_with_metadata\n    config_arg = mock_run_mass.call_args[0][1]\nE   TypeError: 'NoneType' object is not subscriptable"
+            }
+          ]
+        },
+        {
+          "name": "test_handle_query_error",
+          "fullName": "tests/test_a2a_agent.py::TestMessageHandling::test_handle_query_error",
+          "state": "passed"
+        },
+        {
+          "name": "test_response_creation",
+          "fullName": "tests/test_a2a_agent.py::TestResponseGeneration::test_response_creation",
+          "state": "passed"
+        },
+        {
+          "name": "test_error_response_creation",
+          "fullName": "tests/test_a2a_agent.py::TestResponseGeneration::test_error_response_creation",
+          "state": "passed"
+        },
+        {
+          "name": "test_response_with_complex_metadata",
+          "fullName": "tests/test_a2a_agent.py::TestResponseGeneration::test_response_with_complex_metadata",
+          "state": "passed"
+        },
+        {
+          "name": "test_message_validation",
+          "fullName": "tests/test_a2a_agent.py::TestProtocolCompliance::test_message_validation",
+          "state": "passed"
+        },
+        {
+          "name": "test_timestamp_format",
+          "fullName": "tests/test_a2a_agent.py::TestProtocolCompliance::test_timestamp_format",
+          "state": "passed"
+        },
+        {
+          "name": "test_message_id_format",
+          "fullName": "tests/test_a2a_agent.py::TestProtocolCompliance::test_message_id_format",
+          "state": "passed"
+        },
+        {
+          "name": "test_create_a2a_handlers_default",
+          "fullName": "tests/test_a2a_agent.py::TestHandlerFactory::test_create_a2a_handlers_default",
+          "state": "passed"
+        },
+        {
+          "name": "test_create_a2a_handlers_custom_config",
+          "fullName": "tests/test_a2a_agent.py::TestHandlerFactory::test_create_a2a_handlers_custom_config",
+          "state": "passed"
+        },
+        {
+          "name": "test_message_handler_dict_input",
+          "fullName": "tests/test_a2a_agent.py::TestHandlerFactory::test_message_handler_dict_input",
+          "state": "passed"
+        },
+        {
+          "name": "test_full_query_flow",
+          "fullName": "tests/test_a2a_agent.py::TestIntegration::test_full_query_flow",
+          "state": "failed",
+          "errors": [
+            {
+              "message": "tests/test_a2a_agent.py:522: in test_full_query_flow\n    assert response.status == \"success\"\nE   AssertionError: assert 'error' == 'success'\nE     \nE     - success\nE     + error"
+            }
+          ]
+        },
+        {
+          "name": "test_capability_negotiation_flow",
+          "fullName": "tests/test_a2a_agent.py::TestIntegration::test_capability_negotiation_flow",
+          "state": "failed",
+          "errors": [
+            {
+              "message": "tests/test_a2a_agent.py:553: in test_capability_negotiation_flow\n    assert \"parameters\" in consensus_cap\nE   AssertionError: assert 'parameters' in {'description': 'Achieve consensus through multiple AI agents', 'name': 'multi-agent-consensus', 'version': '1.0.0'}"
+            }
+          ]
+        },
+        {
+          "name": "test_error_recovery",
+          "fullName": "tests/test_a2a_agent.py::TestIntegration::test_error_recovery",
+          "state": "passed"
+        },
+        {
+          "name": "test_empty_content_query",
+          "fullName": "tests/test_a2a_agent.py::TestEdgeCases::test_empty_content_query",
+          "state": "passed"
+        },
+        {
+          "name": "test_very_long_content",
+          "fullName": "tests/test_a2a_agent.py::TestEdgeCases::test_very_long_content",
+          "state": "passed"
+        },
+        {
+          "name": "test_invalid_metadata_values",
+          "fullName": "tests/test_a2a_agent.py::TestEdgeCases::test_invalid_metadata_values",
+          "state": "passed"
+        },
+        {
+          "name": "test_agent_card_missing_fields",
+          "fullName": "tests/test_a2a_agent.py::TestEdgeCases::test_agent_card_missing_fields",
+          "state": "passed"
+        },
+        {
+          "name": "test_concurrent_message_handling",
+          "fullName": "tests/test_a2a_agent.py::TestEdgeCases::test_concurrent_message_handling",
           "state": "passed"
         }
       ]

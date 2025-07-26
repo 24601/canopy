@@ -19,6 +19,20 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
+class Capability:
+    """Capability definition for A2A protocol."""
+    
+    name: str
+    description: str
+    version: str = "1.0.0"
+    parameters: Optional[Dict[str, Any]] = None
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert capability to dictionary."""
+        return asdict(self)
+
+
+@dataclass
 class AgentCard:
     """Agent card metadata following A2A protocol specification."""
     
@@ -75,12 +89,14 @@ class AgentCard:
                 "openai/gpt-4.1",
                 "openai/gpt-4.1-mini",
                 "openai/o4-mini",
-                "anthropic/claude-sonnet-4",
+                "openai/o3",
                 "anthropic/claude-opus-4",
+                "anthropic/claude-sonnet-4",
                 "google/gemini-2.5-pro",
                 "google/gemini-2.5-flash",
-                "xai/grok-3",
+                "google/gemini-2.5-pro-deep-think",
                 "xai/grok-4",
+                "xai/grok-4-heavy",
             ]
         
         if self.input_formats is None:
@@ -236,7 +252,7 @@ class CanopyA2AAgent:
             self.consensus_threshold = config.orchestrator.consensus_threshold
             self.max_debate_rounds = config.orchestrator.max_debate_rounds
         else:
-            self.models = models or ["gpt-4.1", "claude-sonnet-4", "gemini-2.5-pro"]
+            self.models = models or ["gpt-4.1", "claude-opus-4", "gemini-2.5-pro", "grok-4"]
             self.algorithm = algorithm
             self.consensus_threshold = consensus_threshold
             self.max_debate_rounds = max_debate_rounds
@@ -619,7 +635,7 @@ def create_a2a_handlers(config=None):
 
 if __name__ == "__main__":
     # Example usage with latest 2025 models
-    agent = CanopyA2AAgent(models=["gpt-4.1", "claude-sonnet-4", "gemini-2.5-pro"])
+    agent = CanopyA2AAgent(models=["gpt-4.1", "claude-opus-4", "gemini-2.5-pro", "grok-4"])
     
     # Get agent card
     print("Agent Card:")
@@ -630,7 +646,7 @@ if __name__ == "__main__":
     response = agent.process_request(
         "What are the key differences between supervised and unsupervised learning?",
         parameters={
-            "models": ["gpt-4.1", "claude-sonnet-4", "gemini-2.5-pro"],
+            "models": ["gpt-4.1", "claude-opus-4", "gemini-2.5-pro", "grok-4"],
             "algorithm": "treequest",
         }
     )
