@@ -13,7 +13,6 @@ from textual.widgets import Footer, Header, Static
 
 from ..logging import get_logger
 from ..types import AgentState, SystemState, VoteDistribution
-
 from .themes import ThemeManager
 from .widgets.agent_panel import AgentPanel
 from .widgets.log_viewer import LogViewer
@@ -111,18 +110,18 @@ class MassGenApp(App):
     def action_refresh(self) -> None:
         """Refresh the display."""
         self.refresh()
-    
+
     def action_cycle_theme(self) -> None:
         """Cycle through available themes."""
         new_theme = self.theme_manager.cycle_theme()
         self._apply_theme()
         self.notify(f"Theme changed to: {new_theme}", severity="information")
-    
+
     def _apply_theme(self) -> None:
         """Apply the current theme CSS."""
         # Get theme CSS
         theme_css = self.theme_manager.get_theme_css()
-        
+
         # Update the app's CSS
         # In Textual, we can dynamically update CSS by rebuilding styles
         self.stylesheet.update(theme_css)

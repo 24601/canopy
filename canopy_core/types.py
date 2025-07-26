@@ -234,7 +234,9 @@ class AgentConfig:
     def __post_init__(self) -> None:
         """Validate agent configuration."""
         if self.agent_type not in ["openai", "gemini", "grok", "anthropic", "openrouter"]:
-            raise ValueError(f"Invalid agent_type: {self.agent_type}. Must be one of: openai, gemini, grok, anthropic, openrouter")
+            raise ValueError(
+                f"Invalid agent_type: {self.agent_type}. Must be one of: openai, gemini, grok, anthropic, openrouter"
+            )
 
 
 @dataclass

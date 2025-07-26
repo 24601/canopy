@@ -17,21 +17,20 @@ from canopy_core import (
 )
 
 # Import Canopy-specific components
-from .a2a_agent import CanopyA2AAgent, AgentCard, A2AMessage, A2AResponse
+from .a2a_agent import A2AMessage, A2AResponse, AgentCard, CanopyA2AAgent
 
 __all__ = [
     # Core functionality from MassGen
     "MassConfig",
-    "MassSystem", 
+    "MassSystem",
     "create_config_from_models",
     "load_config_from_yaml",
     "run_mass_agents",
     "run_mass_with_config",
-    
     # Canopy additions
     "CanopyA2AAgent",
     "AgentCard",
-    "A2AMessage", 
+    "A2AMessage",
     "A2AResponse",
     "__version__",
 ]

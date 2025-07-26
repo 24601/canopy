@@ -9,7 +9,7 @@ from textual.design import ColorSystem
 @dataclass
 class Theme:
     """Represents a complete theme for the TUI."""
-    
+
     name: str
     description: str
     primary: str
@@ -26,7 +26,7 @@ class Theme:
     text_disabled: str
     border: str
     border_focused: str
-    
+
     def to_css_variables(self) -> str:
         """Convert theme to CSS variables."""
         return f"""
@@ -67,7 +67,6 @@ THEMES: Dict[str, Theme] = {
         border="#3f3f46",
         border_focused="#00d9ff",
     ),
-    
     "light": Theme(
         name="light",
         description="Clean light theme for bright environments",
@@ -86,7 +85,6 @@ THEMES: Dict[str, Theme] = {
         border="#e2e8f0",
         border_focused="#0ea5e9",
     ),
-    
     "monokai": Theme(
         name="monokai",
         description="Popular Monokai color scheme",
@@ -105,7 +103,6 @@ THEMES: Dict[str, Theme] = {
         border="#49483e",
         border_focused="#66d9ef",
     ),
-    
     "dracula": Theme(
         name="dracula",
         description="Popular Dracula theme",
@@ -124,7 +121,6 @@ THEMES: Dict[str, Theme] = {
         border="#44475a",
         border_focused="#bd93f9",
     ),
-    
     "solarized_dark": Theme(
         name="solarized_dark",
         description="Solarized dark theme",
@@ -143,7 +139,6 @@ THEMES: Dict[str, Theme] = {
         border="#073642",
         border_focused="#268bd2",
     ),
-    
     "tokyo_night": Theme(
         name="tokyo_night",
         description="Tokyo Night theme",
@@ -162,7 +157,6 @@ THEMES: Dict[str, Theme] = {
         border="#414868",
         border_focused="#7aa2f7",
     ),
-    
     "gruvbox": Theme(
         name="gruvbox",
         description="Gruvbox dark theme",
@@ -181,7 +175,6 @@ THEMES: Dict[str, Theme] = {
         border="#504945",
         border_focused="#83a598",
     ),
-    
     "nord": Theme(
         name="nord",
         description="Nord theme",
@@ -200,7 +193,6 @@ THEMES: Dict[str, Theme] = {
         border="#4c566a",
         border_focused="#88c0d0",
     ),
-    
     "catppuccin": Theme(
         name="catppuccin",
         description="Catppuccin Mocha theme",
@@ -219,7 +211,6 @@ THEMES: Dict[str, Theme] = {
         border="#45475a",
         border_focused="#89b4fa",
     ),
-    
     "cyberpunk": Theme(
         name="cyberpunk",
         description="Neon cyberpunk theme",
@@ -243,12 +234,12 @@ THEMES: Dict[str, Theme] = {
 
 class ThemeManager:
     """Manages theme switching and application."""
-    
+
     def __init__(self, default_theme: str = "dark"):
         """Initialize with a default theme."""
         self.current_theme_name = default_theme
         self.current_theme = THEMES.get(default_theme, THEMES["dark"])
-        
+
     def set_theme(self, theme_name: str) -> bool:
         """Set the current theme by name."""
         if theme_name in THEMES:
@@ -256,15 +247,15 @@ class ThemeManager:
             self.current_theme = THEMES[theme_name]
             return True
         return False
-    
+
     def get_theme(self) -> Theme:
         """Get the current theme."""
         return self.current_theme
-    
+
     def get_theme_names(self) -> list[str]:
         """Get list of available theme names."""
         return list(THEMES.keys())
-    
+
     def get_theme_css(self) -> str:
         """Generate CSS for the current theme."""
         theme = self.current_theme
@@ -492,7 +483,7 @@ class ThemeManager:
             color: $text-muted;
         }}
         """
-    
+
     def cycle_theme(self) -> str:
         """Cycle to the next theme."""
         theme_names = self.get_theme_names()

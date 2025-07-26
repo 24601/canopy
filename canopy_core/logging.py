@@ -22,10 +22,10 @@ from .types import AnswerRecord, LogEntry, VoteRecord
 def get_logger(name: str) -> logging.Logger:
     """
     Get a logger instance with the given name.
-    
+
     Args:
         name: Logger name (typically __name__)
-        
+
     Returns:
         Logger instance
     """

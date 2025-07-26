@@ -38,16 +38,16 @@ jobs:
           pip install -e .[dev]
       
       - name: Run Black formatter check
-        run: black --check massgen/algorithms/
+        run: black --check canopy_core/ canopy/
       
       - name: Run isort import checker
-        run: isort --check-only massgen/algorithms/
+        run: isort --check-only canopy_core/ canopy/
       
       - name: Run Flake8 linter
-        run: flake8 massgen/algorithms/
+        run: flake8 canopy_core/ canopy/
       
       - name: Run interrogate docstring coverage
-        run: interrogate -vv massgen/algorithms/
+        run: interrogate -vv canopy_core/ canopy/
 
   type-check:
     name: Type Check
@@ -74,7 +74,7 @@ jobs:
           pip install -e .[dev]
       
       - name: Run mypy type checker
-        run: mypy massgen/algorithms/
+        run: mypy canopy_core/ canopy/
 
   security:
     name: Security Checks
@@ -102,7 +102,7 @@ jobs:
       
       - name: Run Bandit security linter
         run: |
-          bandit -r massgen/algorithms/ -f json -o bandit-report.json || true
+          bandit -r canopy_core/ canopy/ -f json -o bandit-report.json || true
           if [ -f bandit-report.json ]; then
             python -m json.tool bandit-report.json
             if grep -q '"issue_severity": "HIGH"' bandit-report.json || grep -q '"issue_severity": "MEDIUM"' bandit-report.json; then
@@ -159,7 +159,7 @@ jobs:
           cat > tests/test_algorithms.py << 'EOF'
           """Tests for algorithm implementations."""
           import pytest
-          from massgen.algorithms import AlgorithmFactory, MassGenAlgorithm, TreeQuestAlgorithm
+          from canopy_core.algorithms import AlgorithmFactory, MassGenAlgorithm, TreeQuestAlgorithm
           
           def test_algorithm_factory():
               """Test that algorithms can be created via factory."""
@@ -183,7 +183,7 @@ jobs:
       
       - name: Run pytest with coverage
         run: |
-          pytest tests/ -v --cov=massgen.algorithms --cov-report=xml --cov-report=term
+          pytest tests/ -v --cov=canopy_core --cov=canopy --cov-report=xml --cov-report=term
       
       - name: Upload coverage to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'

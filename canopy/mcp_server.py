@@ -15,23 +15,23 @@ import asyncio
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional, Union
-from datetime import datetime
 import uuid
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
 
 from mcp import Resource, Tool, server
 from mcp.server.models import InitializationOptions
 from mcp.server.stdio import stdio_server
 from mcp.types import (
-    TextContent, 
-    ImageContent, 
     EmbeddedResource,
+    GetPromptResult,
+    ImageContent,
     ListResourcesResult,
     ListToolsResult,
     Prompt,
     PromptArgument,
-    GetPromptResult,
     PromptMessage,
+    TextContent,
 )
 from pydantic import BaseModel, Field
 
@@ -42,23 +42,24 @@ from canopy_core.types import MassConfig
 logger = logging.getLogger(__name__)
 
 # Server instance
-app = server.Server(
-    "canopy-mcp",
-    version="1.0.0"
-)
+app = server.Server("canopy-mcp", version="1.0.0")
+
 
 # Structured output schemas
 class CanopyQueryOutput(BaseModel):
     """Output schema for canopy_query tool."""
+
     answer: str = Field(..., description="The consensus answer from multiple agents")
     consensus_reached: bool = Field(..., description="Whether agents reached consensus")
     confidence: float = Field(..., description="Confidence score (0.0-1.0)", ge=0.0, le=1.0)
     representative_agent: Optional[str] = Field(None, description="ID of the representative agent")
     debate_rounds: int = Field(0, description="Number of debate rounds")
     execution_time_ms: int = Field(..., description="Execution time in milliseconds")
-    
+
+
 class AnalysisResult(BaseModel):
     """Output schema for canopy_analyze tool."""
+
     analysis_type: str = Field(..., description="Type of analysis performed")
     results: Dict[str, Any] = Field(..., description="Analysis results")
     summary: str = Field(..., description="Summary of findings")
@@ -94,19 +95,17 @@ async def list_resources() -> ListResourcesResult:
             mimeType="application/json",
         ),
     ]
-    
-    return ListResourcesResult(
-        resources=all_resources
-    )
+
+    return ListResourcesResult(resources=all_resources)
 
 
 @app.read_resource()
 async def read_resource(uri: str) -> Union[TextContent, ImageContent]:
     """Read a specific resource with security checks."""
-    
+
     # Log resource access for security monitoring
     logger.info(f"Resource access: {uri}")
-    
+
     if uri == "canopy://config/examples":
         content = {
             "fast": {
@@ -134,10 +133,10 @@ async def read_resource(uri: str) -> Union[TextContent, ImageContent]:
                 "consensus_threshold": 0.8,
                 "security": "maximum",
                 "require_auth": True,
-            }
+            },
         }
         return TextContent(type="text", text=json.dumps(content, indent=2))
-    
+
     elif uri == "canopy://algorithms":
         content = {
             "massgen": {
@@ -162,7 +161,7 @@ async def read_resource(uri: str) -> Union[TextContent, ImageContent]:
             },
         }
         return TextContent(type="text", text=json.dumps(content, indent=2))
-    
+
     elif uri == "canopy://models":
         content = {
             "providers": {
@@ -191,7 +190,7 @@ async def read_resource(uri: str) -> Union[TextContent, ImageContent]:
             "security_note": "API keys should never be exposed in logs or responses",
         }
         return TextContent(type="text", text=json.dumps(content, indent=2))
-    
+
     elif uri == "canopy://security/policy":
         content = {
             "version": "1.0.0",
@@ -226,7 +225,7 @@ async def read_resource(uri: str) -> Union[TextContent, ImageContent]:
             ],
         }
         return TextContent(type="text", text=json.dumps(content, indent=2))
-    
+
     else:
         logger.error(f"Unknown resource: {uri}")
         raise ValueError(f"Unknown resource: {uri}")
@@ -345,10 +344,8 @@ async def list_tools() -> ListToolsResult:
             outputSchema=AnalysisResult.model_json_schema(),
         ),
     ]
-    
-    return ListToolsResult(
-        tools=all_tools
-    )
+
+    return ListToolsResult(tools=all_tools)
 
 
 def sanitize_input(text: str) -> str:
@@ -362,12 +359,14 @@ def sanitize_input(text: str) -> str:
 
 
 @app.call_tool()
-async def call_tool(name: str, arguments: Dict[str, Any]) -> List[Union[TextContent, CanopyQueryOutput, AnalysisResult]]:
+async def call_tool(
+    name: str, arguments: Dict[str, Any]
+) -> List[Union[TextContent, CanopyQueryOutput, AnalysisResult]]:
     """Execute a tool with security validations and structured output."""
-    
+
     # Log tool execution for security monitoring
     logger.info(f"Executing tool: {name}")
-    
+
     if name == "canopy_query":
         # Extract and validate arguments
         question = sanitize_input(arguments["question"])
@@ -376,15 +375,15 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[Union[TextCont
         consensus_threshold = arguments.get("consensus_threshold", 0.66)
         max_debate_rounds = arguments.get("max_debate_rounds", 3)
         security_level = arguments.get("security_level", "standard")
-        
+
         # Security check: validate models
         allowed_models = ["gpt-4", "gpt-3.5-turbo", "claude-3", "claude-3-opus", "gemini-pro", "gemini-flash"]
         models = [m for m in models if m in allowed_models][:5]  # Limit to 5 models
-        
+
         if not models:
             logger.error("No valid models specified")
             return [TextContent(type="text", text="Error: No valid models specified")]
-        
+
         # Create configuration with security settings
         config = create_config_from_models(
             models=models,
@@ -396,22 +395,23 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[Union[TextCont
         )
         # Disable streaming display for MCP server usage
         config.streaming_display.display_enabled = False
-        
+
         # Add security monitoring
         if security_level in ["enhanced", "maximum"]:
             config.logging.log_level = "DEBUG"
-        
+
         # Run Canopy with progress reporting
         try:
             logger.info("Initializing agents...")
-            
+
             import time
+
             start_time = time.time()
             result = await asyncio.to_thread(run_mass_with_config, question, config)
             execution_time = int((time.time() - start_time) * 1000)
-            
+
             logger.info("Analysis complete")
-            
+
             # Return structured output
             output = CanopyQueryOutput(
                 answer=result["answer"],
@@ -419,65 +419,65 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[Union[TextCont
                 confidence=result.get("confidence", 0.75),
                 representative_agent=result.get("representative_agent_id"),
                 debate_rounds=result.get("summary", {}).get("debate_rounds", 0),
-                execution_time_ms=execution_time
+                execution_time_ms=execution_time,
             )
-            
+
             return [output]
-            
+
         except Exception as e:
             logger.error(f"Error in canopy_query: {str(e)}")
             return [TextContent(type="text", text=f"Error: {str(e)}")]
-    
+
     elif name == "canopy_query_config":
         # Extract and validate arguments
         question = sanitize_input(arguments["question"])
         config_path = arguments["config_path"]
         override_security = arguments.get("override_security", False)
-        
+
         # Security: validate config path
         if not config_path.endswith(".yaml") or ".." in config_path:
             logger.error("Invalid config path")
             return [TextContent(type="text", text="Error: Invalid configuration path")]
-        
+
         try:
             # Load configuration with security checks
             config = load_config_from_yaml(config_path)
-            
+
             # Apply security overrides if needed
             if not override_security:
                 config.logging.log_level = "INFO"
-            
+
             # Run Canopy
             result = await asyncio.to_thread(run_mass_with_config, question, config)
-            
+
             # Format response
             response_text = f"**Answer**: {result['answer']}\n\n"
             response_text += f"**Config**: {config_path}\n"
             response_text += f"**Consensus**: {result['consensus_reached']}\n"
             response_text += f"**Duration**: {result['session_duration']:.2f}s\n"
-            
+
             return [TextContent(type="text", text=response_text)]
-            
+
         except Exception as e:
             logger.error(f"Error in canopy_query_config: {str(e)}")
             return [TextContent(type="text", text=f"Error: {str(e)}")]
-    
+
     elif name == "canopy_analyze":
         # Extract and validate arguments
         question = sanitize_input(arguments["question"])
         analysis_type = arguments.get("analysis_type", "compare_algorithms")
         models = arguments.get("models", ["gpt-4", "claude-3"])
         include_security = arguments.get("include_security_metrics", True)
-        
+
         try:
             results = {}
-            
+
             if analysis_type == "compare_algorithms":
                 logger.info("Comparing algorithms...")
-                
+
                 for i, algorithm in enumerate(["massgen", "treequest"]):
                     logger.info(f"Testing {algorithm}...")
-                    
+
                     config = create_config_from_models(
                         models=models,
                         orchestrator_config={"algorithm": algorithm},
@@ -491,7 +491,7 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[Union[TextCont
                         "duration": result["session_duration"],
                         "confidence": result.get("confidence", 0.75),
                     }
-                
+
                 summary = "Both algorithms provided answers. "
                 if results["massgen"]["consensus"] and results["treequest"]["consensus"]:
                     summary += "Both achieved consensus. "
@@ -501,55 +501,56 @@ async def call_tool(name: str, arguments: Dict[str, Any]) -> List[Union[TextCont
                     summary += "Only TreeQuest achieved consensus. "
                 else:
                     summary += "Neither achieved full consensus. "
-                
+
                 recommendations = []
                 if results["massgen"]["duration"] < results["treequest"]["duration"]:
                     recommendations.append("Use MassGen for faster results")
                 if results["treequest"]["confidence"] > results["massgen"]["confidence"]:
                     recommendations.append("Use TreeQuest for higher confidence")
-                
+
             elif analysis_type == "security_analysis":
                 logger.info("Performing security analysis...")
-                
+
                 # Analyze query for potential security issues
                 security_checks = {
                     "query_length": len(question) < 5000,
                     "no_injection_patterns": not any(p in question for p in ["';", "--", "DROP"]),
                     "no_pii": not any(p in question.lower() for p in ["ssn", "credit card", "password"]),
                 }
-                
+
                 results = {
                     "security_checks": security_checks,
                     "risk_level": "low" if all(security_checks.values()) else "medium",
                     "recommendations": [
-                        "Input validation passed" if security_checks["no_injection_patterns"] else "Review input for potential injection",
+                        (
+                            "Input validation passed"
+                            if security_checks["no_injection_patterns"]
+                            else "Review input for potential injection"
+                        ),
                         "Query length acceptable" if security_checks["query_length"] else "Consider shortening query",
                         "No PII detected" if security_checks["no_pii"] else "Remove PII from query",
                     ],
                 }
-                
+
                 summary = f"Security analysis complete. Risk level: {results['risk_level']}"
                 recommendations = results["recommendations"]
-            
+
             else:
                 # Implement other analysis types as before
                 summary = f"Analysis type {analysis_type} completed"
                 recommendations = ["Review results for insights"]
-            
+
             # Return structured output
             output = AnalysisResult(
-                analysis_type=analysis_type,
-                results=results,
-                summary=summary,
-                recommendations=recommendations
+                analysis_type=analysis_type, results=results, summary=summary, recommendations=recommendations
             )
-            
+
             return [output]
-            
+
         except Exception as e:
             logger.error(f"Error in canopy_analyze: {str(e)}")
             return [TextContent(type="text", text=f"Error: {str(e)}")]
-    
+
     else:
         logger.error(f"Unknown tool: {name}")
         return [TextContent(type="text", text=f"Unknown tool: {name}")]
@@ -563,28 +564,14 @@ async def list_prompts() -> List[Prompt]:
             name="consensus_analysis",
             description="Analyze a topic using multi-agent consensus",
             arguments=[
-                PromptArgument(
-                    name="topic",
-                    description="The topic to analyze",
-                    required=True
-                ),
-                PromptArgument(
-                    name="depth",
-                    description="Analysis depth (basic, standard, thorough)",
-                    required=False
-                )
-            ]
+                PromptArgument(name="topic", description="The topic to analyze", required=True),
+                PromptArgument(name="depth", description="Analysis depth (basic, standard, thorough)", required=False),
+            ],
         ),
         Prompt(
             name="security_review",
             description="Review query for security considerations",
-            arguments=[
-                PromptArgument(
-                    name="query",
-                    description="The query to review",
-                    required=True
-                )
-            ]
+            arguments=[PromptArgument(name="query", description="The query to review", required=True)],
         ),
     ]
 
@@ -592,19 +579,19 @@ async def list_prompts() -> List[Prompt]:
 @app.get_prompt()
 async def get_prompt(name: str, arguments: Dict[str, str]) -> GetPromptResult:
     """Get a specific prompt template."""
-    
+
     if name == "consensus_analysis":
         topic = arguments.get("topic", "")
         depth = arguments.get("depth", "standard")
-        
+
         depth_configs = {
             "basic": {"models": 2, "rounds": 2},
             "standard": {"models": 3, "rounds": 3},
             "thorough": {"models": 5, "rounds": 5},
         }
-        
+
         config = depth_configs.get(depth, depth_configs["standard"])
-        
+
         return GetPromptResult(
             messages=[
                 PromptMessage(
@@ -612,10 +599,10 @@ async def get_prompt(name: str, arguments: Dict[str, str]) -> GetPromptResult:
                 )
             ]
         )
-    
+
     elif name == "security_review":
         query = arguments.get("query", "")
-        
+
         return GetPromptResult(
             messages=[
                 PromptMessage(
@@ -623,7 +610,7 @@ async def get_prompt(name: str, arguments: Dict[str, str]) -> GetPromptResult:
                 )
             ]
         )
-    
+
     else:
         raise ValueError(f"Unknown prompt: {name}")
 
@@ -631,19 +618,16 @@ async def get_prompt(name: str, arguments: Dict[str, str]) -> GetPromptResult:
 async def main():
     """Run the MCP server with security configuration."""
     # Configure logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
     # Validate environment
     required_vars = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY"]
     missing_vars = [var for var in required_vars if not os.getenv(var)]
-    
+
     if missing_vars:
         logger.warning(f"Missing API keys: {missing_vars}")
         logger.info("Some features may be limited without all API keys")
-    
+
     # Run the server
     async with stdio_server() as (read_stream, write_stream):
         init_options = InitializationOptions(
@@ -657,7 +641,7 @@ async def main():
                 "sampling": True,
             },
         )
-        
+
         await app.run(
             read_stream,
             write_stream,

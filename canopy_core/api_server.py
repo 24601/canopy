@@ -24,6 +24,7 @@ from .types import AgentConfig, MassConfig, ModelConfig
 # Import Canopy A2A components
 try:
     from canopy.a2a_agent import CanopyA2AAgent, create_a2a_handlers
+
     A2A_AVAILABLE = True
 except ImportError:
     A2A_AVAILABLE = False
@@ -524,18 +525,14 @@ async def root() -> Dict[str, Any]:
             },
             "health": "/health",
             "documentation": "/docs",
-            "openapi": "/openapi.json"
+            "openapi": "/openapi.json",
         },
-        "credits": "Built on MassGen by AG2 team"
+        "credits": "Built on MassGen by AG2 team",
     }
-    
+
     if A2A_AVAILABLE:
-        endpoints["endpoints"]["a2a"] = {
-            "agent_card": "/agent",
-            "capabilities": "/capabilities",
-            "message": "/message"
-        }
-    
+        endpoints["endpoints"]["a2a"] = {"agent_card": "/agent", "capabilities": "/capabilities", "message": "/message"}
+
     return endpoints
 
 
@@ -543,17 +540,17 @@ async def root() -> Dict[str, Any]:
 if A2A_AVAILABLE:
     # Initialize A2A handlers
     a2a_handlers = create_a2a_handlers()
-    
+
     @app.get("/agent")
     async def get_agent_card() -> Dict[str, Any]:
         """Get A2A agent card."""
         return a2a_handlers["agent_card"]()
-    
+
     @app.get("/capabilities")
     async def get_capabilities() -> Dict[str, Any]:
         """Get detailed agent capabilities."""
         return a2a_handlers["capabilities"]()
-    
+
     @app.post("/message")
     async def handle_a2a_message(message: Dict[str, Any]) -> Dict[str, Any]:
         """Handle A2A protocol message."""
